@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Stage, Layer } from "react-konva";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useItems } from "../../hooks/useItems";
-import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
+//import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import ItemRenderer from "../items/base/ItemRenderer";
 import Grid from "./Grid";
-import Toolbar from "../toolbar/Toolbar";
-import InfoPanel from "../ui/InfoPanel";
+//import Toolbar from "../toolbar/Toolbar";
+//import InfoPanel from "../ui/InfoPanel";
 import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { UI_COLORS } from "../../constants/colors";
@@ -29,14 +29,6 @@ const CanvasBoard = () => {
     const [editingId, setEditingId] = useState(null);
     const [editingText, setEditingText] = useState("");
 
-    useKeyboardShortcuts({
-        onDelete: () => {
-            if (items.selectedId) {
-                items.deleteItem(items.selectedId);
-            }
-        }
-    });
-
     const handleDoubleClick = (item) => {
         if (item.type === ITEM_TYPES.STICKY_NOTE) {
             setEditingId(item.id);
@@ -44,37 +36,23 @@ const CanvasBoard = () => {
         }
     };
 
-    const handleAddItem = (type) => {
-        items.addItem(type, canvas.centerPos.x - 100, canvas.centerPos.y - 60);
-    };
+    const handleSave = () => {
+    const item = items.items.find(i => i.id === editingId); // Make sure you get the item
+    if (!item) return; // Avoid crash if not found
+
+    items.updateItem(editingId, {
+        ...item,
+        data: {
+            ...item.data,
+            text: editingText
+        }
+    });
+
+    setEditingId(null);
+};
 
     return (
         <>
-            <InfoPanel
-                zoom={canvas.stageScale}
-                itemCount={items.items.length}
-                selectedId={items.selectedId}
-            />
-
-            <Toolbar onAddItem={handleAddItem} />
-
-            <StickyNoteEditor
-                editingId={editingId}
-                editingText={editingText}
-                setEditingText={setEditingText}
-                items={items.items}
-                stageScale={canvas.stageScale}
-                stagePos={canvas.stagePos}
-                onFinishEditing={() => {
-                    items.updateItemData(editingId, { text: editingText });
-                    setEditingId(null);
-                    setEditingText("");
-                }}
-                onCancel={() => {
-                    setEditingId(null);
-                    setEditingText("");
-                }}
-            />
 
             <Stage
                 width={window.innerWidth}
@@ -112,6 +90,16 @@ const CanvasBoard = () => {
                     ))}
                 </Layer>
             </Stage>
+
+            <StickyNoteEditor
+                editingId={editingId}
+                editingText={editingText}
+                setEditingText={setEditingText}
+                items={items.items}
+                stageScale={canvas.stageScale}
+                stagePos={canvas.stagePos}
+                onSave={handleSave}
+            />
         </>
     );
 };
