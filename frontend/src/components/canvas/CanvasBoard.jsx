@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from 'react';
 import { Stage, Layer } from "react-konva";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useItems } from "../../hooks/useItems";
