@@ -1,12 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Stage, Layer } from "react-konva";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useItems } from "../../hooks/useItems";
-//import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import ItemRenderer from "../items/base/ItemRenderer";
 import Grid from "./Grid";
-//import Toolbar from "../toolbar/Toolbar";
-//import InfoPanel from "../ui/InfoPanel";
 import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { UI_COLORS } from "../../constants/colors";
@@ -25,9 +22,15 @@ const INITIAL_ITEMS = [
 const CanvasBoard = () => {
     const canvas = useCanvas();
     const items = useItems(INITIAL_ITEMS);
-
+    
     const [editingId, setEditingId] = useState(null);
     const [editingText, setEditingText] = useState("");
+    
+    // Resize state
+    const [isResizing, setIsResizing] = useState(false);
+    const [resizeData, setResizeData] = useState(null);
+    const resizeStartPos = useRef({ x: 0, y: 0 });
+    const originalSize = useRef({ width: 0, height: 0 });
 
     const handleDoubleClick = (item) => {
         if (item.type === ITEM_TYPES.STICKY_NOTE) {
@@ -37,23 +40,89 @@ const CanvasBoard = () => {
     };
 
     const handleSave = () => {
-    const item = items.items.find(i => i.id === editingId); // Make sure you get the item
-    if (!item) return; // Avoid crash if not found
+        const item = items.items.find(i => i.id === editingId);
+        if (!item) return;
 
-    items.updateItem(editingId, {
-        ...item,
-        data: {
-            ...item.data,
-            text: editingText
+        items.updateItem(editingId, {
+            ...item,
+            data: {
+                ...item.data,
+                text: editingText
+            }
+        });
+
+        setEditingId(null);
+    };
+
+    const handleResizeStart = (itemId, corner, e) => {
+        e.cancelBubble = true;
+        
+        const item = items.items.find(i => i.id === itemId);
+        if (!item) return;
+
+        const stage = canvas.stageRef.current;
+        const pointer = stage.getPointerPosition();
+        
+        setIsResizing(true);
+        setResizeData({ itemId, corner });
+        resizeStartPos.current = { x: pointer.x, y: pointer.y };
+        originalSize.current = { width: item.width, height: item.height };
+        
+        // Prevent dragging during resize
+        items.setSelectedId(itemId);
+    };
+
+    const handleMouseMove = (e) => {
+        if (isResizing && resizeData) {
+            const stage = canvas.stageRef.current;
+            const pointer = stage.getPointerPosition();
+            
+            const deltaX = (pointer.x - resizeStartPos.current.x) / canvas.stageScale;
+            const deltaY = (pointer.y - resizeStartPos.current.y) / canvas.stageScale;
+            
+            const item = items.items.find(i => i.id === resizeData.itemId);
+            if (!item) return;
+
+            let newWidth = originalSize.current.width;
+            let newHeight = originalSize.current.height;
+            
+            // Calculate new dimensions based on resize corner
+            switch (resizeData.corner) {
+                case 'bottom-right':
+                    newWidth = Math.max(50, originalSize.current.width + deltaX);
+                    newHeight = Math.max(30, originalSize.current.height + deltaY);
+                    break;
+                case 'right':
+                    newWidth = Math.max(50, originalSize.current.width + deltaX);
+                    break;
+                case 'bottom':
+                    newHeight = Math.max(30, originalSize.current.height + deltaY);
+                    break;
+            }
+
+            // Update the item with new dimensions
+            items.updateItem(resizeData.itemId, {
+                ...item,
+                width: newWidth,
+                height: newHeight
+            });
+        } else {
+            // Call original mouse move handler
+            canvas.handleMouseMove(e);
         }
-    });
+    };
 
-    setEditingId(null);
-};
+    const handleMouseUp = (e) => {
+        if (isResizing) {
+            setIsResizing(false);
+            setResizeData(null);
+        } else {
+            canvas.handleMouseUp(e);
+        }
+    };
 
     return (
         <>
-
             <Stage
                 width={window.innerWidth}
                 height={window.innerHeight}
@@ -69,10 +138,10 @@ const CanvasBoard = () => {
                         items.setSelectedId(null);
                     }
                 }}
-                onMouseMove={canvas.handleMouseMove}
-                onMouseUp={canvas.handleMouseUp}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
                 ref={canvas.stageRef}
-                style={{ background: UI_COLORS.BACKGROUND }}
+                style={{ background: UI_COLORS.BACKGROUND, cursor: isResizing ? 'nw-resize' : 'default' }}
             >
                 <Layer>
                     <Grid />
@@ -86,6 +155,8 @@ const CanvasBoard = () => {
                             onDragEnd={items.moveItem}
                             onSelect={() => items.setSelectedId(item.id)}
                             onDoubleClick={() => handleDoubleClick(item)}
+                            onResize={handleResizeStart}
+                            isDraggable={!isResizing}
                         />
                     ))}
                 </Layer>
