@@ -30,7 +30,7 @@ const INITIAL_ITEMS = [
         id: 1,
         type: ITEM_TYPES.STICKY_NOTE,
         x: 50, y: 60, width: 150, height: 120, zIndex: 0,
-        data: { text: "First Note", color: "#fff59d", fontSize: 16 }
+        data: { text: "First Note", color: "#fff59d", fontSize: 16 , title: "Example Title"}
     },
 ];
 
@@ -41,6 +41,7 @@ const CanvasBoard = () => {
     const [editingId, setEditingId] = useState(null);
     const [editingText, setEditingText] = useState("");
     const [selectedTool, setSelectedTool] = useState('select');
+    const [editingTitle, setEditingTitle] = useState("");
     
     // Resize state
     const [isResizing, setIsResizing] = useState(false);
@@ -51,7 +52,9 @@ const CanvasBoard = () => {
     const handleDoubleClick = (item) => {
         if (item.type === ITEM_TYPES.STICKY_NOTE) {
             setEditingId(item.id);
-            setEditingText(item.data.text);
+            setEditingText(item.data.text || "");
+            setEditingTitle(item.data.title || "");
+            setSelectedTool("select");
         }
     };
 
@@ -63,6 +66,7 @@ const CanvasBoard = () => {
             ...item,
             data: {
                 ...item.data,
+                title: editingTitle,
                 text: editingText
             }
         });
@@ -71,46 +75,15 @@ const CanvasBoard = () => {
     };
 
     const handleAddItem = (itemType) => {
-    const baseX = 100 + Math.random() * 200;
-    const baseY = 100 + Math.random() * 200;
-    
-    const newItem = items.addItem(itemType, baseX, baseY);
-    console.log('Added item, current items:', items.items);
-    
-    setSelectedTool(ITEM_TYPES.STICKY_NOTE);
-};
-
-    const createNewItem = (itemType) => {
-        console.log('createNewItem called with:', itemType);
-        console.log('ITEM_TYPES.STICKY_NOTE:', ITEM_TYPES.STICKY_NOTE);
-        
-        const baseId = Date.now();
         const baseX = 100 + Math.random() * 200;
         const baseY = 100 + Math.random() * 200;
-
-        switch (itemType) {
-            case ITEM_TYPES.STICKY_NOTE:
-                const newItem = {
-                    id: baseId,
-                    type: 'sticky_note',
-                    x: baseX,
-                    y: baseY,
-                    width: 150,
-                    height: 120,
-                    zIndex: 0,
-                    data: {
-                        text: "New sticky note",
-                        color: "#fff59d",
-                        fontSize: 16
-                    }
-                };
-                console.log('Created sticky note:', newItem);
-                return newItem;
-            default:
-                console.error('Unknown item type:', itemType);
-                return null;
-        }
+        
+        items.addItem(itemType, baseX, baseY);
+        console.log('Added item, current items:', items.items);
+        
+        setSelectedTool(ITEM_TYPES.STICKY_NOTE);
     };
+
 
     const handleResizeStart = (itemId, corner, e) => {
         e.cancelBubble = true;
@@ -125,7 +98,8 @@ const CanvasBoard = () => {
         setResizeData({ itemId, corner });
         resizeStartPos.current = { x: pointer.x, y: pointer.y };
         originalSize.current = { width: item.width, height: item.height };
-        
+        setSelectedTool("select");
+
         items.setSelectedId(itemId);
     };
 
@@ -200,6 +174,7 @@ const CanvasBoard = () => {
                     const clickedOnEmpty = e.target === canvas.stageRef.current;
                     if (clickedOnEmpty) {
                         items.setSelectedId(null);
+                        setSelectedTool("select");
                     }
                 }}
                 onMouseMove={handleMouseMove}
@@ -231,6 +206,8 @@ const CanvasBoard = () => {
 
             <StickyNoteEditor
                 editingId={editingId}
+                editingTitle={editingTitle}
+                setEditingTitle={setEditingTitle}
                 editingText={editingText}
                 setEditingText={setEditingText}
                 items={items.items}

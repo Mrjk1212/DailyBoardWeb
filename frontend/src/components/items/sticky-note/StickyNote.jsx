@@ -22,8 +22,20 @@ const StickyNote = ({ item, isSelected, onDragEnd, onSelect, onDoubleClick, onRe
             isDraggable={isDraggable}
         >
             <Text
+            x={10}
+            y={6}
+            text={item.data.title || "Example Title"}
+            fontSize={item.data.fontSize + 2}
+            fontStyle="bold"
+            width={item.width - 20}
+            height={24}
+            fill="#333"
+            onClick={onSelect}
+            onDblClick={onDoubleClick}
+            />
+            <Text
                 x={10}
-                y={10}
+                y={32}
                 text={item.data.text}
                 fontSize={item.data.fontSize || 16}
                 width={item.width - 20}
