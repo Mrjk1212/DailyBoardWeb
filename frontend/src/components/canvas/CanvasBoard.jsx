@@ -7,6 +7,7 @@ import Grid from "./Grid";
 import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { UI_COLORS } from "../../constants/colors";
+import Toolbar from "../toolbar/Toolbar";
 
 // Sample data
 const INITIAL_ITEMS = [
@@ -25,6 +26,7 @@ const CanvasBoard = () => {
     
     const [editingId, setEditingId] = useState(null);
     const [editingText, setEditingText] = useState("");
+    const [selectedTool, setSelectedTool] = useState('select');
     
     // Resize state
     const [isResizing, setIsResizing] = useState(false);
@@ -52,6 +54,39 @@ const CanvasBoard = () => {
         });
 
         setEditingId(null);
+    };
+
+
+    const handleAddItem = (itemType) => {
+        const newItem = createNewItem(itemType);
+        items.addItem(newItem);
+        setSelectedTool('select');
+    };
+
+    const createNewItem = (itemType) => {
+        const baseId = Date.now();
+        const baseX = 100 + Math.random() * 200;
+        const baseY = 100 + Math.random() * 200;
+
+        switch (itemType) {
+            case ITEM_TYPES.STICKY_NOTE:
+                return {
+                    id: baseId,
+                    type: ITEM_TYPES.STICKY_NOTE,
+                    x: baseX,
+                    y: baseY,
+                    width: 150,
+                    height: 120,
+                    zIndex: 0,
+                    data: {
+                        text: "New sticky note",
+                        color: "#fff59d",
+                        fontSize: 16
+                    }
+                };
+            default:
+                return null;
+        }
     };
 
     const handleResizeStart = (itemId, corner, e) => {
@@ -123,6 +158,13 @@ const CanvasBoard = () => {
 
     return (
         <>
+
+        <Toolbar
+        onAddItem={handleAddItem}
+        selectedTool={selectedTool}
+        setSelectedTool={setSelectedTool}
+        />
+
             <Stage
                 width={window.innerWidth}
                 height={window.innerHeight}

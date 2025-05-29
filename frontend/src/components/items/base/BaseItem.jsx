@@ -43,8 +43,8 @@ const BaseItem = ({
                 cornerRadius={4}
                 shadowColor="rgba(0,0,0,0.2)"
                 shadowBlur={isSelected ? 8 : 4}
-                shadowOffset={{ x: 2, y: 2 }}
-                shadowOpacity={0.3}
+                shadowOffset={{ x: 4, y: 4 }}
+                shadowOpacity={0.4}
             />
             
             {children}
