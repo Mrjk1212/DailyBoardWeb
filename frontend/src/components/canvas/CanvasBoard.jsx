@@ -4,10 +4,25 @@ import { useCanvas } from "../../hooks/useCanvas";
 import { useItems } from "../../hooks/useItems";
 import ItemRenderer from "../items/base/ItemRenderer";
 import Grid from "./Grid";
+import Toolbar from "../toolbar/Toolbar";
 import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { UI_COLORS } from "../../constants/colors";
-import Toolbar from "../toolbar/Toolbar";
+
+// Add debug logs for all imports
+console.log('=== DEBUG IMPORTS ===');
+console.log('React:', React);
+console.log('Stage:', Stage);
+console.log('Layer:', Layer);
+console.log('useCanvas:', useCanvas);
+console.log('useItems:', useItems);
+console.log('ItemRenderer:', ItemRenderer);
+console.log('Grid:', Grid);
+console.log('Toolbar:', Toolbar);
+console.log('StickyNoteEditor:', StickyNoteEditor);
+console.log('ITEM_TYPES:', ITEM_TYPES);
+console.log('UI_COLORS:', UI_COLORS);
+console.log('=== END DEBUG ===');
 
 // Sample data
 const INITIAL_ITEMS = [
@@ -17,7 +32,6 @@ const INITIAL_ITEMS = [
         x: 50, y: 60, width: 150, height: 120, zIndex: 0,
         data: { text: "First Note", color: "#fff59d", fontSize: 16 }
     },
-    // ... other initial items
 ];
 
 const CanvasBoard = () => {
@@ -56,23 +70,29 @@ const CanvasBoard = () => {
         setEditingId(null);
     };
 
-
     const handleAddItem = (itemType) => {
-        const newItem = createNewItem(itemType);
-        items.addItem(newItem);
-        setSelectedTool('select');
-    };
+    const baseX = 100 + Math.random() * 200;
+    const baseY = 100 + Math.random() * 200;
+    
+    const newItem = items.addItem(itemType, baseX, baseY);
+    console.log('Added item, current items:', items.items);
+    
+    setSelectedTool(ITEM_TYPES.STICKY_NOTE);
+};
 
     const createNewItem = (itemType) => {
+        console.log('createNewItem called with:', itemType);
+        console.log('ITEM_TYPES.STICKY_NOTE:', ITEM_TYPES.STICKY_NOTE);
+        
         const baseId = Date.now();
         const baseX = 100 + Math.random() * 200;
         const baseY = 100 + Math.random() * 200;
 
         switch (itemType) {
             case ITEM_TYPES.STICKY_NOTE:
-                return {
+                const newItem = {
                     id: baseId,
-                    type: ITEM_TYPES.STICKY_NOTE,
+                    type: 'sticky_note',
                     x: baseX,
                     y: baseY,
                     width: 150,
@@ -84,7 +104,10 @@ const CanvasBoard = () => {
                         fontSize: 16
                     }
                 };
+                console.log('Created sticky note:', newItem);
+                return newItem;
             default:
+                console.error('Unknown item type:', itemType);
                 return null;
         }
     };
@@ -103,7 +126,6 @@ const CanvasBoard = () => {
         resizeStartPos.current = { x: pointer.x, y: pointer.y };
         originalSize.current = { width: item.width, height: item.height };
         
-        // Prevent dragging during resize
         items.setSelectedId(itemId);
     };
 
@@ -121,7 +143,6 @@ const CanvasBoard = () => {
             let newWidth = originalSize.current.width;
             let newHeight = originalSize.current.height;
             
-            // Calculate new dimensions based on resize corner
             switch (resizeData.corner) {
                 case 'bottom-right':
                     newWidth = Math.max(50, originalSize.current.width + deltaX);
@@ -135,14 +156,12 @@ const CanvasBoard = () => {
                     break;
             }
 
-            // Update the item with new dimensions
             items.updateItem(resizeData.itemId, {
                 ...item,
                 width: newWidth,
                 height: newHeight
             });
         } else {
-            // Call original mouse move handler
             canvas.handleMouseMove(e);
         }
     };
@@ -156,14 +175,17 @@ const CanvasBoard = () => {
         }
     };
 
+    // Debug what we're about to render
+    console.log('About to render - items:', items.items);
+    console.log('Selected tool:', selectedTool);
+
     return (
         <>
-
-        <Toolbar
-        onAddItem={handleAddItem}
-        selectedTool={selectedTool}
-        setSelectedTool={setSelectedTool}
-        />
+            <Toolbar
+                onAddItem={handleAddItem}
+                selectedTool={selectedTool}
+                setSelectedTool={setSelectedTool}
+            />
 
             <Stage
                 width={window.innerWidth}
@@ -189,18 +211,21 @@ const CanvasBoard = () => {
                     <Grid />
                 </Layer>
                 <Layer>
-                    {items.items.map((item) => (
-                        <ItemRenderer
-                            key={item.id}
-                            item={item}
-                            isSelected={items.selectedId === item.id}
-                            onDragEnd={items.moveItem}
-                            onSelect={() => items.setSelectedId(item.id)}
-                            onDoubleClick={() => handleDoubleClick(item)}
-                            onResize={handleResizeStart}
-                            isDraggable={!isResizing}
-                        />
-                    ))}
+                    {items.items.map((item) => {
+                        console.log('Rendering item:', item);
+                        return (
+                            <ItemRenderer
+                                key={item.id}
+                                item={item}
+                                isSelected={items.selectedId === item.id}
+                                onDragEnd={items.moveItem}
+                                onSelect={() => items.setSelectedId(item.id)}
+                                onDoubleClick={() => handleDoubleClick(item)}
+                                onResize={handleResizeStart}
+                                isDraggable={!isResizing}
+                            />
+                        );
+                    })}
                 </Layer>
             </Stage>
 
