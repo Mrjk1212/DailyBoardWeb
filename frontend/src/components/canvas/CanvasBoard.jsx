@@ -8,6 +8,7 @@ import Toolbar from "../toolbar/Toolbar";
 import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { UI_COLORS } from "../../constants/colors";
+import StickyNote from '../items/sticky-note/StickyNote';
 
 // Add debug logs for all imports
 console.log('=== DEBUG IMPORTS ===');
@@ -80,8 +81,6 @@ const CanvasBoard = () => {
         
         items.addItem(itemType, baseX, baseY);
         console.log('Added item, current items:', items.items);
-        
-        setSelectedTool(ITEM_TYPES.STICKY_NOTE);
     };
 
 

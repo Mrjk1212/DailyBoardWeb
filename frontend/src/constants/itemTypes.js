@@ -3,7 +3,9 @@ export const ITEM_TYPES = {
     TODO_LIST: 'todo_list',
     GOAL_NOTE: 'goal_note',
     FREE_DRAW: 'free_draw',
-    CALENDAR: 'calendar'
+    CALENDAR: 'calendar',
+    LINK: 'link',
+    IMAGE: 'image'
 };
 
 export const DEFAULT_DIMENSIONS = {
