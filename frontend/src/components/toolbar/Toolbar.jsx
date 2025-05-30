@@ -1,6 +1,8 @@
 import React from 'react';
 import { ITEM_TYPES } from '../../constants/itemTypes';
 
+//TOOLBAR IS NOT RESPONSIVE AND DOES NOT COLLAPSE FOR SMALLER DEVICES
+
 const Toolbar = ({ onAddItem, selectedTool, setSelectedTool }) => {
     const tools = [
         {
@@ -22,16 +24,34 @@ const Toolbar = ({ onAddItem, selectedTool, setSelectedTool }) => {
             description: 'Add a todo list'
         },
         {
-            id: ITEM_TYPES.TEXT_BOX,
-            name: 'Text Box',
-            icon: '📄',
-            description: 'Add a text box'
+            id: ITEM_TYPES.CALENDAR,
+            name: 'Calendar',
+            icon: '📅',
+            description: 'Add a Calendar'
         },
         {
-            id: ITEM_TYPES.SHAPE,
-            name: 'Shape',
-            icon: '🔷',
-            description: 'Add a shape'
+            id: ITEM_TYPES.FREE_DRAW,
+            name: 'Free Draw',
+            icon: '🖊️',
+            description: 'Free Draw'
+        },
+        {
+            id: ITEM_TYPES.GOAL_NOTE,
+            name: 'Goal',
+            icon: '🎯',
+            description: 'Add a Goal Note'
+        },
+        {
+            id: ITEM_TYPES.LINK,
+            name: 'Link',
+            icon: '🔗',
+            description: 'Add a Website Link'
+        },
+        {
+            id: ITEM_TYPES.IMAGE,
+            name: 'Image',
+            icon: '📷',
+            description: 'Add an Image'
         }
     ];
 
@@ -101,8 +121,8 @@ const Toolbar = ({ onAddItem, selectedTool, setSelectedTool }) => {
                     <button className="action-button duplicate" title="Duplicate selected item">
                         📋 Copy
                     </button>
-                    <button className="action-button clear" title="Clear canvas">
-                        🧹 Clear All
+                    <button className="action-button undo" title="Undo">
+                        🧹 Undo
                     </button>
                 </div>
             </div>
@@ -228,7 +248,7 @@ const Toolbar = ({ onAddItem, selectedTool, setSelectedTool }) => {
                     color: #1565c0;
                 }
 
-                .action-button.clear:hover {
+                .action-button.undo:hover {
                     background: #fff3e0;
                     border-color: #ff9800;
                     color: #ef6c00;

@@ -2,8 +2,8 @@ export const ITEM_TYPES = {
     STICKY_NOTE: 'sticky_note',
     TODO_LIST: 'todo_list',
     GOAL_NOTE: 'goal_note',
-    DRAWING_PATH: 'drawing_path',
-    SHAPE: 'shape'
+    FREE_DRAW: 'free_draw',
+    CALENDAR: 'calendar'
 };
 
 export const DEFAULT_DIMENSIONS = {
