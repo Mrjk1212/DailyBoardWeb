@@ -18,8 +18,6 @@ const BaseItem = ({
             onDragEnd(item.id, newX, newY);
         }
         
-        // Reset position to prevent Konva state issues
-        e.target.position({ x: item.x, y: item.y });
     };
 
     return (

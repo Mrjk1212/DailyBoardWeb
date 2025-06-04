@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Stage, Layer } from "react-konva";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useItems } from "../../hooks/useItems";
@@ -9,6 +9,7 @@ import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { UI_COLORS } from "../../constants/colors";
 import StickyNote from '../items/sticky-note/StickyNote';
+import { fetchItems, createItem, updateItem, deleteItem } from '../api/useApi';
 
 // Add debug logs for all imports
 console.log('=== DEBUG IMPORTS ===');
@@ -25,97 +26,120 @@ console.log('ITEM_TYPES:', ITEM_TYPES);
 console.log('UI_COLORS:', UI_COLORS);
 console.log('=== END DEBUG ===');
 
-// Sample data
-const INITIAL_ITEMS = [
-    {
-        id: 1,
-        type: ITEM_TYPES.STICKY_NOTE,
-        x: 50, y: 60, width: 150, height: 120, zIndex: 0,
-        data: { text: "First Note", color: "#fff59d", fontSize: 16 , title: "Example Title"}
-    },
-];
+
 
 const CanvasBoard = () => {
     const canvas = useCanvas();
-    const items = useItems(INITIAL_ITEMS);
-    
+
+    // Items state loaded from backend
+    const [items, setItems] = useState([]);
+
+    // UI & editing states
     const [editingId, setEditingId] = useState(null);
     const [editingText, setEditingText] = useState("");
-    const [selectedTool, setSelectedTool] = useState('select');
     const [editingTitle, setEditingTitle] = useState("");
-    
+    const [selectedTool, setSelectedTool] = useState('select');
+    const [selectedId, setSelectedId] = useState(null);
+
     // Resize state
     const [isResizing, setIsResizing] = useState(false);
     const [resizeData, setResizeData] = useState(null);
     const resizeStartPos = useRef({ x: 0, y: 0 });
     const originalSize = useRef({ width: 0, height: 0 });
 
-    const handleDoubleClick = (item) => {
-        if (item.type === ITEM_TYPES.STICKY_NOTE) {
-            setEditingId(item.id);
-            setEditingText(item.data.text || "");
-            setEditingTitle(item.data.title || "");
-            setSelectedTool("select");
-        }
-    };
-
-    const handleSave = () => {
-        const item = items.items.find(i => i.id === editingId);
-        if (!item) return;
-
-        items.updateItem(editingId, {
+    // Load items from backend on mount
+    useEffect(() => {
+    fetchItems()
+        .then(itemsFromBackend => {
+        const parsedItems = itemsFromBackend.map(item => ({
             ...item,
-            data: {
-                ...item.data,
-                title: editingTitle,
-                text: editingText
-            }
-        });
+            data: typeof item.data === 'string' ? JSON.parse(item.data) : item.data
+        }));
+        setItems(parsedItems);
+        })
+        .catch(console.error);
+    }, []);
 
-        setEditingId(null);
-    };
-
-    const handleAddItem = (itemType) => {
+    // Add new item - creates in backend then updates state
+    const handleAddItem = async (itemType) => {
         const baseX = 100 + Math.random() * 200;
         const baseY = 100 + Math.random() * 200;
-        
-        items.addItem(itemType, baseX, baseY);
-        console.log('Added item, current items:', items.items);
+
+        const newItem = {
+            type: itemType,
+            x: baseX,
+            y: baseY,
+            width: 150,
+            height: 120,
+            zIndex: 0,
+            data: { text: "", color: "#fff59d", fontSize: 16, title: "New Note" }, // object here
+        };
+
+        try {
+            const saved = await createItem(newItem);
+            setItems(prev => [...prev, saved]);
+        } catch (err) {
+            console.error("Failed to add item:", err);
+        }
+    };
+const handleSave = async () => {
+    const item = items.find(i => i.id === editingId);
+    if (!item) return;
+
+    const currentData = typeof item.data === "string" ? JSON.parse(item.data) : item.data || {};
+
+    const updatedItem = {
+        ...item,
+        data: JSON.stringify({
+        ...currentData,
+        title: editingTitle,
+        text: editingText,
+        }),
     };
 
+    try {
+        const updated = await updateItem(updatedItem);
+        setItems(prev => prev.map(i => i.id === updated.id ? updated : i));
+        setEditingId(null);
+    } catch (err) {
+        console.error("Failed to save item:", err);
+    }
+};
 
+    // Start resize process
     const handleResizeStart = (itemId, corner, e) => {
         e.cancelBubble = true;
-        
-        const item = items.items.find(i => i.id === itemId);
+
+        const item = items.find(i => i.id === itemId);
         if (!item) return;
 
         const stage = canvas.stageRef.current;
         const pointer = stage.getPointerPosition();
-        
+
         setIsResizing(true);
         setResizeData({ itemId, corner });
         resizeStartPos.current = { x: pointer.x, y: pointer.y };
         originalSize.current = { width: item.width, height: item.height };
         setSelectedTool("select");
 
-        items.setSelectedId(itemId);
+        setSelectedId(itemId);
     };
 
+    // Handle resize movement - update backend after resize ends (to avoid spamming server)
     const handleMouseMove = (e) => {
         if (isResizing && resizeData) {
             const stage = canvas.stageRef.current;
             const pointer = stage.getPointerPosition();
-            
+
             const deltaX = (pointer.x - resizeStartPos.current.x) / canvas.stageScale;
             const deltaY = (pointer.y - resizeStartPos.current.y) / canvas.stageScale;
-            
-            const item = items.items.find(i => i.id === resizeData.itemId);
+
+            const item = items.find(i => i.id === resizeData.itemId);
             if (!item) return;
 
             let newWidth = originalSize.current.width;
             let newHeight = originalSize.current.height;
-            
+
             switch (resizeData.corner) {
                 case 'bottom-right':
                     newWidth = Math.max(50, originalSize.current.width + deltaX);
@@ -129,28 +153,73 @@ const CanvasBoard = () => {
                     break;
             }
 
-            items.updateItem(resizeData.itemId, {
-                ...item,
-                width: newWidth,
-                height: newHeight
-            });
+            // Update local state immediately for UI feedback
+            setItems(prev => prev.map(i =>
+                i.id === resizeData.itemId ? { ...i, width: newWidth, height: newHeight } : i
+            ));
         } else {
             canvas.handleMouseMove(e);
         }
     };
 
-    const handleMouseUp = (e) => {
-        if (isResizing) {
+    // On mouse up - stop resizing, then update backend with new size
+    const handleMouseUp = async (e) => {
+        if (isResizing && resizeData) {
             setIsResizing(false);
+
+            const item = items.find(i => i.id === resizeData.itemId);
+            if (item) {
+                try {
+                    const updated = await updateItem(item);
+                    setItems(prev => prev.map(i => i.id === updated.id ? updated : i));
+                } catch (err) {
+                    console.error("Failed to update resized item:", err);
+                }
+            }
+
             setResizeData(null);
         } else {
             canvas.handleMouseUp(e);
         }
     };
 
-    // Debug what we're about to render
-    console.log('About to render - items:', items.items);
-    console.log('Selected tool:', selectedTool);
+    // Handle item delete
+    const handleDelete = async (id) => {
+        try {
+            await deleteItem(id);
+            setItems(prev => prev.filter(i => i.id !== id));
+            if (editingId === id) setEditingId(null);
+        } catch (err) {
+            console.error("Failed to delete item:", err);
+        }
+    };
+
+const handleDoubleClick = (item) => {
+    if (item.type === ITEM_TYPES.STICKY_NOTE) {
+        setEditingId(item.id);
+        
+        const data = typeof item.data === "string" ? JSON.parse(item.data) : item.data || {};
+        
+        setEditingText(data.text || "");
+        setEditingTitle(data.title || "");
+        setSelectedTool("select");
+    }
+};
+
+    // Move item position after drag, update backend
+    const handleDragEnd = async (id, x, y) => {
+        const item = items.find(i => i.id === id);
+        if (!item) return;
+
+        const updatedItem = { ...item, x, y };
+        setItems(prev => prev.map(i => i.id === id ? updatedItem : i));
+
+        try {
+            await updateItem(updatedItem);
+        } catch (err) {
+            console.error("Failed to update dragged item:", err);
+        }
+    };
 
     return (
         <>
@@ -172,7 +241,7 @@ const CanvasBoard = () => {
                     canvas.handleMouseDown(e);
                     const clickedOnEmpty = e.target === canvas.stageRef.current;
                     if (clickedOnEmpty) {
-                        items.setSelectedId(null);
+                        setSelectedId(null);
                         setSelectedTool("select");
                     }
                 }}
@@ -185,21 +254,19 @@ const CanvasBoard = () => {
                     <Grid />
                 </Layer>
                 <Layer>
-                    {items.items.map((item) => {
-                        console.log('Rendering item:', item);
-                        return (
-                            <ItemRenderer
-                                key={item.id}
-                                item={item}
-                                isSelected={items.selectedId === item.id}
-                                onDragEnd={items.moveItem}
-                                onSelect={() => items.setSelectedId(item.id)}
-                                onDoubleClick={() => handleDoubleClick(item)}
-                                onResize={handleResizeStart}
-                                isDraggable={!isResizing}
-                            />
-                        );
-                    })}
+                    {items.map(item => (
+                        <ItemRenderer
+                            key={item.id}
+                            item={item}
+                            isSelected={selectedId === item.id}
+                            onDragEnd={(pos) => handleDragEnd(item.id, pos.x, pos.y)}
+                            onSelect={() => setSelectedId(item.id)}
+                            onDoubleClick={() => handleDoubleClick(item)}
+                            onResize={handleResizeStart}
+                            isDraggable={!isResizing}
+                            onDelete={() => handleDelete(item.id)}
+                        />
+                    ))}
                 </Layer>
             </Stage>
 
@@ -209,7 +276,7 @@ const CanvasBoard = () => {
                 setEditingTitle={setEditingTitle}
                 editingText={editingText}
                 setEditingText={setEditingText}
-                items={items.items}
+                items={items}
                 stageScale={canvas.stageScale}
                 stagePos={canvas.stagePos}
                 onSave={handleSave}
