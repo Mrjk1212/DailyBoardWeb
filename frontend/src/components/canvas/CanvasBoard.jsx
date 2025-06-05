@@ -200,7 +200,7 @@ const CanvasBoard = () => {
 
     const handleDelete = async (id) => {
         try {
-            await deleteItem(id);
+            await deleteItem(id); // id should be a string or number, not an object
             setItems(prev => prev.filter(i => i.id !== id));
             if (editingId === id) setEditingId(null);
         } catch (err) {
@@ -247,6 +247,7 @@ const handleDragEnd = async (id, x, y) => {
                 onAddItem={handleAddItem}
                 selectedTool={selectedTool}
                 setSelectedTool={setSelectedTool}
+                onDelete={() => handleDelete(selectedId)}
             />
 
             <Stage

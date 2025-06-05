@@ -33,5 +33,13 @@ export const updateItem = async (item) => {
 };
 
 export async function deleteItem(id) {
-    return fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+    });
+
+    if (!res.ok) {
+        throw new Error('Failed to delete item');
+    }
+
+    return;
 }

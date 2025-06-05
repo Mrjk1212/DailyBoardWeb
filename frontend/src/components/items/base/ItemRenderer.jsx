@@ -4,7 +4,7 @@ import StickyNote from "../sticky-note/StickyNote";
 //import TodoList from "../todo-list/TodoList";
 //import GoalNote from "../goal-note/GoalNote";
 
-const ItemRenderer = ({ item, isSelected, onDragEnd, onSelect, onDoubleClick, onResize, isDraggable = true }) => {
+const ItemRenderer = ({ item, isSelected, onDragEnd, onSelect, onDoubleClick, onResize, isDraggable = true, onDelete }) => {
     const commonProps = {
         item,
         isSelected,
@@ -12,7 +12,8 @@ const ItemRenderer = ({ item, isSelected, onDragEnd, onSelect, onDoubleClick, on
         onSelect,
         onDoubleClick,
         onResize,
-        isDraggable
+        isDraggable,
+        onDelete
     };
 
     switch (item.type) {

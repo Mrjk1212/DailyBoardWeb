@@ -3,7 +3,7 @@ import { ITEM_TYPES } from '../../constants/itemTypes';
 
 //TOOLBAR IS NOT RESPONSIVE AND DOES NOT COLLAPSE FOR SMALLER DEVICES
 
-const Toolbar = ({ onAddItem, selectedTool, setSelectedTool }) => {
+const Toolbar = ({ onAddItem, selectedTool, setSelectedTool, onDelete }) => {
     const tools = [
         {
             id: 'select',
@@ -58,7 +58,11 @@ const Toolbar = ({ onAddItem, selectedTool, setSelectedTool }) => {
     const handleToolClick = (toolId) => {
         if (toolId === 'select') {
             setSelectedTool('select');
-        } else {
+        }
+        else if (toolId === 'delete'){
+            setSelectedTool('delete');
+        }
+        else {
             setSelectedTool(toolId);
         }
     };
@@ -115,7 +119,11 @@ const Toolbar = ({ onAddItem, selectedTool, setSelectedTool }) => {
             <div className="toolbar-section">
                 <h4>Actions</h4>
                 <div className="action-buttons">
-                    <button className="action-button delete" title="Delete selected item">
+                    <button
+                        className="action-button delete"
+                        title="Delete selected item"
+                        onClick={onDelete}
+                        >
                         🗑️ Delete
                     </button>
                     <button className="action-button duplicate" title="Duplicate selected item">
