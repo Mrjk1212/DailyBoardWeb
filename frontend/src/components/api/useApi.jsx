@@ -14,14 +14,23 @@ export async function createItem(item) {
     return res.json();
 }
 
-export async function updateItem(item) {
-    const res = await fetch(`${API_URL}/${item.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item)
+export const updateItem = async (item) => {
+    console.log("Sending update payload:", item); // 👈 ADD THIS
+    const response = await fetch(`/api/items/${item.id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(item),
     });
-    return res.json();
-}
+
+    if (!response.ok) {
+        const text = await response.text(); // 👈 for debugging
+        throw new Error(`Failed to update item: ${response.status} - ${text}`);
+    }
+
+    return response.json();
+};
 
 export async function deleteItem(id) {
     return fetch(`${API_URL}/${id}`, { method: 'DELETE' });

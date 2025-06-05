@@ -8,10 +8,8 @@ import Toolbar from "../toolbar/Toolbar";
 import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { UI_COLORS } from "../../constants/colors";
-import StickyNote from '../items/sticky-note/StickyNote';
 import { fetchItems, createItem, updateItem, deleteItem } from '../api/useApi';
 
-// Add debug logs for all imports
 console.log('=== DEBUG IMPORTS ===');
 console.log('React:', React);
 console.log('Stage:', Stage);
@@ -26,41 +24,32 @@ console.log('ITEM_TYPES:', ITEM_TYPES);
 console.log('UI_COLORS:', UI_COLORS);
 console.log('=== END DEBUG ===');
 
-
-
 const CanvasBoard = () => {
     const canvas = useCanvas();
 
-    // Items state loaded from backend
     const [items, setItems] = useState([]);
-
-    // UI & editing states
     const [editingId, setEditingId] = useState(null);
     const [editingText, setEditingText] = useState("");
     const [editingTitle, setEditingTitle] = useState("");
     const [selectedTool, setSelectedTool] = useState('select');
     const [selectedId, setSelectedId] = useState(null);
-
-    // Resize state
     const [isResizing, setIsResizing] = useState(false);
     const [resizeData, setResizeData] = useState(null);
     const resizeStartPos = useRef({ x: 0, y: 0 });
     const originalSize = useRef({ width: 0, height: 0 });
 
-    // Load items from backend on mount
     useEffect(() => {
-    fetchItems()
-        .then(itemsFromBackend => {
-        const parsedItems = itemsFromBackend.map(item => ({
-            ...item,
-            data: typeof item.data === 'string' ? JSON.parse(item.data) : item.data
-        }));
-        setItems(parsedItems);
-        })
-        .catch(console.error);
+        fetchItems()
+            .then(itemsFromBackend => {
+                const parsedItems = itemsFromBackend.map(item => ({
+                    ...item,
+                    data: typeof item.data === 'string' ? JSON.parse(item.data) : item.data
+                }));
+                setItems(parsedItems);
+            })
+            .catch(console.error);
     }, []);
 
-    // Add new item - creates in backend then updates state
     const handleAddItem = async (itemType) => {
         const baseX = 100 + Math.random() * 200;
         const baseY = 100 + Math.random() * 200;
@@ -72,17 +61,24 @@ const CanvasBoard = () => {
             width: 150,
             height: 120,
             zIndex: 0,
-            data: { text: "", color: "#fff59d", fontSize: 16, title: "New Note" }, // object here
+            data: { text: "", color: "#fff59d", fontSize: 16, title: "New Note" },
         };
 
         try {
-            const saved = await createItem(newItem);
-            setItems(prev => [...prev, saved]);
+            const saved = await createItem({
+                ...newItem,
+                data: JSON.stringify(newItem.data)
+            });
+            setItems(prev => [...prev, {
+                ...saved,
+                data: typeof saved.data === 'string' ? JSON.parse(saved.data) : saved.data
+            }]);
         } catch (err) {
             console.error("Failed to add item:", err);
         }
     };
-const handleSave = async () => {
+
+    const handleSave = async () => {
     const item = items.find(i => i.id === editingId);
     if (!item) return;
 
@@ -90,23 +86,38 @@ const handleSave = async () => {
 
     const updatedItem = {
         ...item,
-        data: JSON.stringify({
-        ...currentData,
-        title: editingTitle,
-        text: editingText,
-        }),
+        data: {
+            ...currentData,
+            title: editingTitle,
+            text: editingText,
+        },
     };
 
     try {
-        const updated = await updateItem(updatedItem);
-        setItems(prev => prev.map(i => i.id === updated.id ? updated : i));
+        const updated = await updateItem({
+            ...updatedItem,
+            data: JSON.stringify(updatedItem.data)
+        });
+
+        // Only trust backend's data if it returns valid x/y
+        setItems(prev => prev.map(i =>
+            i.id === updated.id
+                ? {
+                    ...i,
+                    ...updated,
+                    x: updated.x ?? i.x,
+                    y: updated.y ?? i.y,
+                    data: typeof updated.data === 'string' ? JSON.parse(updated.data) : updated.data
+                }
+                : i
+        ));
+
         setEditingId(null);
     } catch (err) {
         console.error("Failed to save item:", err);
     }
 };
 
-    // Start resize process
     const handleResizeStart = (itemId, corner, e) => {
         e.cancelBubble = true;
 
@@ -125,7 +136,6 @@ const handleSave = async () => {
         setSelectedId(itemId);
     };
 
-    // Handle resize movement - update backend after resize ends (to avoid spamming server)
     const handleMouseMove = (e) => {
         if (isResizing && resizeData) {
             const stage = canvas.stageRef.current;
@@ -153,7 +163,6 @@ const handleSave = async () => {
                     break;
             }
 
-            // Update local state immediately for UI feedback
             setItems(prev => prev.map(i =>
                 i.id === resizeData.itemId ? { ...i, width: newWidth, height: newHeight } : i
             ));
@@ -162,7 +171,6 @@ const handleSave = async () => {
         }
     };
 
-    // On mouse up - stop resizing, then update backend with new size
     const handleMouseUp = async (e) => {
         if (isResizing && resizeData) {
             setIsResizing(false);
@@ -170,8 +178,15 @@ const handleSave = async () => {
             const item = items.find(i => i.id === resizeData.itemId);
             if (item) {
                 try {
-                    const updated = await updateItem(item);
-                    setItems(prev => prev.map(i => i.id === updated.id ? updated : i));
+                    const updated = await updateItem({
+                        ...item,
+                        data: JSON.stringify(item.data)
+                    });
+                    setItems(prev => prev.map(i =>
+                        i.id === updated.id
+                            ? { ...updated, data: typeof updated.data === 'string' ? JSON.parse(updated.data) : updated.data }
+                            : i
+                    ));
                 } catch (err) {
                     console.error("Failed to update resized item:", err);
                 }
@@ -183,7 +198,6 @@ const handleSave = async () => {
         }
     };
 
-    // Handle item delete
     const handleDelete = async (id) => {
         try {
             await deleteItem(id);
@@ -194,32 +208,38 @@ const handleSave = async () => {
         }
     };
 
-const handleDoubleClick = (item) => {
-    if (item.type === ITEM_TYPES.STICKY_NOTE) {
-        setEditingId(item.id);
-        
-        const data = typeof item.data === "string" ? JSON.parse(item.data) : item.data || {};
-        
-        setEditingText(data.text || "");
-        setEditingTitle(data.title || "");
-        setSelectedTool("select");
+    const handleDoubleClick = (item) => {
+        if (item.type === ITEM_TYPES.STICKY_NOTE) {
+            setEditingId(item.id);
+            const data = item.data;
+            setEditingText(data.text || "");
+            setEditingTitle(data.title || "");
+            setSelectedTool("select");
+        }
+    };
+
+const handleDragEnd = async (id, x, y) => {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    const updatedItem = { ...item, x, y };
+
+    setItems(prev => prev.map(i =>
+        i.id === updatedItem.id
+            ? { ...updatedItem, data: typeof updatedItem.data === 'string' ? JSON.parse(updatedItem.data) : updatedItem.data }
+            : i
+    ));
+
+    try {
+        await updateItem({
+            ...updatedItem,
+            data: JSON.stringify(updatedItem.data)
+        });
+    } catch (err) {
+        console.error("Failed to update dragged item:", err);
     }
 };
 
-    // Move item position after drag, update backend
-    const handleDragEnd = async (id, x, y) => {
-        const item = items.find(i => i.id === id);
-        if (!item) return;
-
-        const updatedItem = { ...item, x, y };
-        setItems(prev => prev.map(i => i.id === id ? updatedItem : i));
-
-        try {
-            await updateItem(updatedItem);
-        } catch (err) {
-            console.error("Failed to update dragged item:", err);
-        }
-    };
 
     return (
         <>
@@ -259,7 +279,7 @@ const handleDoubleClick = (item) => {
                             key={item.id}
                             item={item}
                             isSelected={selectedId === item.id}
-                            onDragEnd={(pos) => handleDragEnd(item.id, pos.x, pos.y)}
+                            onDragEnd={(id, x, y) => handleDragEnd(id, x, y)}
                             onSelect={() => setSelectedId(item.id)}
                             onDoubleClick={() => handleDoubleClick(item)}
                             onResize={handleResizeStart}
