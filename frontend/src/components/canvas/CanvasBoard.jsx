@@ -54,32 +54,47 @@ const CanvasBoard = () => {
         const baseX = 100 + Math.random() * 200;
         const baseY = 100 + Math.random() * 200;
 
+        let width = 180;
+        let height = 160;
+        let data = {};
+
+        if (itemType === ITEM_TYPES.TODO_LIST) {
+            width = 220;
+            height = 200;
+            data = { title: "Todo List", todos: ["Task 1", "Task 2"] };
+        } else {
+            width = 180;
+            height = 140;
+            data = { text: "", color: "#fff59d", fontSize: 16, title: "New Note" };
+        }
+
         const newItem = {
             type: itemType,
             x: baseX,
             y: baseY,
-            width: 180,
-            height: 160,
+            width,
+            height,
             zIndex: 0,
-            data: itemType === ITEM_TYPES.TODO_LIST
-                ? { title: "Todo List", todos: ["Task 1", "Task 2"] }
-                : { text: "", color: "#fff59d", fontSize: 16, title: "New Note" },
+            data,
         };
 
         try {
             const saved = await createItem({
                 ...newItem,
-                data: JSON.stringify(newItem.data)
+                data: JSON.stringify(data),
             });
-            setItems(prev => [...prev, {
-                ...saved,
-                data: typeof saved.data === 'string' ? JSON.parse(saved.data) : saved.data
-            }]);
+
+            setItems(prev => [
+                ...prev,
+                {
+                    ...saved,
+                    data: typeof saved.data === 'string' ? JSON.parse(saved.data) : saved.data,
+                },
+            ]);
         } catch (err) {
             console.error("Failed to add item:", err);
         }
     };
-
     const handleSave = async () => {
         const item = items.find(i => i.id === editingId);
         if (!item) return;
@@ -213,11 +228,11 @@ const CanvasBoard = () => {
     const handleUpdate = async (updatedItem) => {
         try {
             const updated = await updateItem({
-            ...updatedItem,
-            data: JSON.stringify(updatedItem.data),
+                ...updatedItem,
+                data: JSON.stringify(updatedItem.data),
             });
             setItems((prev) =>
-            prev.map((item) => (item.id === updated.id ? { ...updated, data: updatedItem.data } : item))
+                prev.map((item) => (item.id === updated.id ? { ...updated, data: updatedItem.data } : item))
             );
         } catch (err) {
             console.error("Failed to update item:", err);
