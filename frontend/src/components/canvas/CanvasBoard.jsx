@@ -58,10 +58,12 @@ const CanvasBoard = () => {
             type: itemType,
             x: baseX,
             y: baseY,
-            width: 150,
-            height: 120,
+            width: 180,
+            height: 160,
             zIndex: 0,
-            data: { text: "", color: "#fff59d", fontSize: 16, title: "New Note" },
+            data: itemType === ITEM_TYPES.TODO_LIST
+                ? { title: "Todo List", todos: ["Task 1", "Task 2"] }
+                : { text: "", color: "#fff59d", fontSize: 16, title: "New Note" },
         };
 
         try {
@@ -79,44 +81,44 @@ const CanvasBoard = () => {
     };
 
     const handleSave = async () => {
-    const item = items.find(i => i.id === editingId);
-    if (!item) return;
+        const item = items.find(i => i.id === editingId);
+        if (!item) return;
 
-    const currentData = typeof item.data === "string" ? JSON.parse(item.data) : item.data || {};
+        const currentData = typeof item.data === "string" ? JSON.parse(item.data) : item.data || {};
 
-    const updatedItem = {
-        ...item,
-        data: {
-            ...currentData,
-            title: editingTitle,
-            text: editingText,
-        },
+        const updatedItem = {
+            ...item,
+            data: {
+                ...currentData,
+                title: editingTitle,
+                text: editingText,
+            },
+        };
+
+        try {
+            const updated = await updateItem({
+                ...updatedItem,
+                data: JSON.stringify(updatedItem.data)
+            });
+
+            // Only trust backend's data if it returns valid x/y
+            setItems(prev => prev.map(i =>
+                i.id === updated.id
+                    ? {
+                        ...i,
+                        ...updated,
+                        x: updated.x ?? i.x,
+                        y: updated.y ?? i.y,
+                        data: typeof updated.data === 'string' ? JSON.parse(updated.data) : updated.data
+                    }
+                    : i
+            ));
+
+            setEditingId(null);
+        } catch (err) {
+            console.error("Failed to save item:", err);
+        }
     };
-
-    try {
-        const updated = await updateItem({
-            ...updatedItem,
-            data: JSON.stringify(updatedItem.data)
-        });
-
-        // Only trust backend's data if it returns valid x/y
-        setItems(prev => prev.map(i =>
-            i.id === updated.id
-                ? {
-                    ...i,
-                    ...updated,
-                    x: updated.x ?? i.x,
-                    y: updated.y ?? i.y,
-                    data: typeof updated.data === 'string' ? JSON.parse(updated.data) : updated.data
-                }
-                : i
-        ));
-
-        setEditingId(null);
-    } catch (err) {
-        console.error("Failed to save item:", err);
-    }
-};
 
     const handleResizeStart = (itemId, corner, e) => {
         e.cancelBubble = true;
@@ -218,27 +220,27 @@ const CanvasBoard = () => {
         }
     };
 
-const handleDragEnd = async (id, x, y) => {
-    const item = items.find(i => i.id === id);
-    if (!item) return;
+    const handleDragEnd = async (id, x, y) => {
+        const item = items.find(i => i.id === id);
+        if (!item) return;
 
-    const updatedItem = { ...item, x, y };
+        const updatedItem = { ...item, x, y };
 
-    setItems(prev => prev.map(i =>
-        i.id === updatedItem.id
-            ? { ...updatedItem, data: typeof updatedItem.data === 'string' ? JSON.parse(updatedItem.data) : updatedItem.data }
-            : i
-    ));
+        setItems(prev => prev.map(i =>
+            i.id === updatedItem.id
+                ? { ...updatedItem, data: typeof updatedItem.data === 'string' ? JSON.parse(updatedItem.data) : updatedItem.data }
+                : i
+        ));
 
-    try {
-        await updateItem({
-            ...updatedItem,
-            data: JSON.stringify(updatedItem.data)
-        });
-    } catch (err) {
-        console.error("Failed to update dragged item:", err);
-    }
-};
+        try {
+            await updateItem({
+                ...updatedItem,
+                data: JSON.stringify(updatedItem.data)
+            });
+        } catch (err) {
+            console.error("Failed to update dragged item:", err);
+        }
+    };
 
 
     return (
