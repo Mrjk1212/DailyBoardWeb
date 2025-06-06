@@ -210,6 +210,20 @@ const CanvasBoard = () => {
         }
     };
 
+    const handleUpdate = async (updatedItem) => {
+        try {
+            const updated = await updateItem({
+            ...updatedItem,
+            data: JSON.stringify(updatedItem.data),
+            });
+            setItems((prev) =>
+            prev.map((item) => (item.id === updated.id ? { ...updated, data: updatedItem.data } : item))
+            );
+        } catch (err) {
+            console.error("Failed to update item:", err);
+        }
+    };
+
     const handleDoubleClick = (item) => {
         if (item.type === ITEM_TYPES.STICKY_NOTE) {
             setEditingId(item.id);
@@ -288,6 +302,7 @@ const CanvasBoard = () => {
                             onResize={handleResizeStart}
                             isDraggable={!isResizing}
                             onDelete={() => handleDelete(item.id)}
+                            onUpdate={handleUpdate}
                         />
                     ))}
                 </Layer>
