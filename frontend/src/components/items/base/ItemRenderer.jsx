@@ -2,6 +2,7 @@ import React from "react";
 import StickyNote from "../sticky-note/StickyNote";
 import TodoList from "../todo-list/TodoList";
 import { ITEM_TYPES } from "../../../constants/itemTypes";
+import Calendar from "../calendar/Calendar";
 
 const ItemRenderer = React.memo(({ 
     item, 
@@ -33,6 +34,21 @@ const ItemRenderer = React.memo(({
         case ITEM_TYPES.TODO_LIST:
             return (
                 <TodoList
+                    item={item}
+                    isSelected={isSelected}
+                    onDragEnd={onDragEnd}
+                    onSelect={onSelect}
+                    onDoubleClick={onDoubleClick}
+                    onResize={onResize}
+                    isDraggable={isDraggable}
+                    onDelete={onDelete}
+                    onUpdate={onUpdate}
+                />
+            );
+
+        case ITEM_TYPES.CALENDAR:
+            return (
+                <Calendar
                     item={item}
                     isSelected={isSelected}
                     onDragEnd={onDragEnd}

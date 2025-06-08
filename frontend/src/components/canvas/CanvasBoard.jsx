@@ -8,6 +8,7 @@ import Toolbar from "../toolbar/Toolbar";
 import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { UI_COLORS } from "../../constants/colors";
+import CalendarEditor from '../items/calendar/CalendarEditor';
 import { fetchItems, createItem, updateItem, deleteItem } from '../api/useApi';
 
 console.log('=== DEBUG IMPORTS ===');
@@ -334,6 +335,17 @@ const CanvasBoard = () => {
                 stagePos={canvas.stagePos}
                 onSave={handleSave}
             />
+
+            {items.map((item) =>
+                item.type === "calendar" ? (
+                    <CalendarEditor
+                        key={item.id}
+                        item={item}
+                        stageScale={canvas.stageScale}
+                        stagePos={canvas.stagePos}
+                    />
+                ) : null
+            )}
         </>
     );
 };

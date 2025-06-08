@@ -43,6 +43,16 @@ export const createNewItem = (type, x = 100, y = 100) => {
                     color: ITEM_COLORS.GOAL_NOTE
                 }
             };
+        case ITEM_TYPES.CALENDAR:
+        return {
+            ...baseItem,
+            data: {
+                title: "Calendar",
+                targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                progress: 0,
+                color: ITEM_COLORS.CALENDAR
+            }
+        };
         default:
             return baseItem;
     }
