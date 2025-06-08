@@ -273,6 +273,23 @@ const CanvasBoard = () => {
     };
 
 
+    const handleUpdateEvents = (id, newEvents) => {
+        setItems(prev =>
+            prev.map(i =>
+                i.id === id
+                    ? {
+                        ...i,
+                        data: {
+                            ...i.data,
+                            events: newEvents,
+                        },
+                    }
+                    : i
+            )
+        );
+    };
+
+
     return (
         <>
             <Toolbar
@@ -343,6 +360,7 @@ const CanvasBoard = () => {
                         item={item}
                         stageScale={canvas.stageScale}
                         stagePos={canvas.stagePos}
+                        setEvents={(newEvents) => handleUpdateEvents(item.id, newEvents)}
                     />
                 ) : null
             )}
