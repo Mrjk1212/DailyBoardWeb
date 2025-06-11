@@ -2,7 +2,13 @@ const API_URL = 'http://localhost:3000/api/items';
 
 export async function fetchItems() {
     const res = await fetch(API_URL);
-    return res.json();
+    const items = await res.json();
+
+    // Parse .data string into object
+    return items.map(item => ({
+        ...item,
+        data: typeof item.data === 'string' ? JSON.parse(item.data) : item.data
+    }));
 }
 
 export async function createItem(item) {

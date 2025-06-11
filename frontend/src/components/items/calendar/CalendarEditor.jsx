@@ -2,6 +2,7 @@ import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import ical from 'ical.js';
+import { updateItem } from '../../api/useApi';
 
 const CalendarEditor = ({ item, stageScale, stagePos, setEvents }) => {
     if (!item) return null;
@@ -24,7 +25,6 @@ const CalendarEditor = ({ item, stageScale, stagePos, setEvents }) => {
 
             const parsedEvents = vevents.map((vevent) => {
                 const event = new ical.Event(vevent);
-
                 return {
                     id: event.uid,
                     title: event.summary,
@@ -34,7 +34,19 @@ const CalendarEditor = ({ item, stageScale, stagePos, setEvents }) => {
                 };
             });
 
+            // Save to UI state
             setEvents(parsedEvents);
+
+            // Persist to backend
+            const updatedItem = {
+                ...item,
+                data: JSON.stringify({
+                    ...item.data,
+                    events: parsedEvents,
+                }),
+            };
+
+            await updateItem(updatedItem);
         } catch (error) {
             console.error('Failed to parse ICS file:', error);
         }
