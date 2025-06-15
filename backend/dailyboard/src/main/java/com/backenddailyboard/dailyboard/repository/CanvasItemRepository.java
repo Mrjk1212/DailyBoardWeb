@@ -1,10 +1,10 @@
 package com.backenddailyboard.dailyboard.repository;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
-
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
 import com.backenddailyboard.dailyboard.model.CanvasItem;
 
-@Repository
-public interface CanvasItemRepository extends CrudRepository<CanvasItem, Long> {
+public interface CanvasItemRepository extends JpaRepository<CanvasItem, Long> {
+    // Custom method to find CanvasItems by User ID
+    List<CanvasItem> findAllByUserId(Long userId);
 }

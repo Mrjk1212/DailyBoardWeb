@@ -1,51 +1,78 @@
-const API_URL = 'http://localhost:3000/api/items';
+// Updated api.js
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+const API_URL = 'http://localhost:8080/api/items'; // Updated to Spring Boot port
 
 export async function fetchItems() {
-    const res = await fetch(API_URL);
+    const res = await fetch(API_URL, {
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+        },
+    });
     const items = await res.json();
-
-    // Parse .data string into object
     return items.map(item => ({
         ...item,
-        data: typeof item.data === 'string' ? JSON.parse(item.data) : item.data
+        data: typeof item.data === 'string' ? JSON.parse(item.data) : item.data,
     }));
 }
 
 export async function createItem(item) {
     const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item)
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+        },
+        body: JSON.stringify(item),
     });
     return res.json();
 }
 
 export const updateItem = async (item) => {
-    console.log("Sending update payload:", item); // 👈 ADD THIS
-    const response = await fetch(`/api/items/${item.id}`, {
-        method: "PUT",
+    const response = await fetch(`${API_URL}/${item.id}`, {
+        method: 'PUT',
         headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
         },
         body: JSON.stringify(item),
     });
 
     if (!response.ok) {
-        const text = await response.text(); // 👈 for debugging
+        const text = await response.text();
         throw new Error(`Failed to update item: ${response.status} - ${text}`);
     }
-
     return response.json();
 };
 
 export async function deleteItem(id) {
     const res = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
     });
 
     if (!res.ok) {
         throw new Error('Failed to delete item');
     }
-
     return;
+}
+
+// Add user info fetch
+export async function fetchUserInfo() {
+    const res = await fetch('http://localhost:8080/auth/user', {
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+        },
+    });
+    
+    if (!res.ok) {
+        throw new Error('Failed to fetch user info');
+    }
+    
+    return res.json();
 }
