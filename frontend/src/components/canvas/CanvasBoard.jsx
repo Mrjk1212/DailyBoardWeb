@@ -9,10 +9,10 @@ import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { ITEM_COLORS, UI_COLORS } from "../../constants/colors";
 import CalendarEditor from '../items/calendar/CalendarEditor';
-import GoalNote from '../items/goal-note/GoalNote';
 import GoalNoteEditor from '../items/goal-note/GoalNoteEditor';
 import { Line } from 'react-konva';
 import { fetchItems, createItem, updateItem, deleteItem } from '../api/useApi';
+import LinkNoteEditor from '../items/link-note/LinkNoteEditor';
 
 console.log('=== DEBUG IMPORTS ===');
 console.log('React:', React);
@@ -45,6 +45,7 @@ const CanvasBoard = () => {
     const [lines, setLines] = useState([]);
     const [editingDescription, setEditingDescription] = useState("");
     const [editingGoalDate, setEditingGoalDate] = useState("");
+    const [editingUrl, setEditingUrl] = useState("");
 
 
     useEffect(() => {
@@ -79,7 +80,12 @@ const CanvasBoard = () => {
         } else if (itemType === ITEM_TYPES.STICKY_NOTE) {
             width = 180;
             height = 140;
-            data = { text: "", color: "#fff59d", fontSize: 16, title: "New Note" };
+            data = { text: "", color: ITEM_COLORS.STICKY_NOTE, fontSize: 16, title: "New Note" };
+        }
+        else if (itemType === ITEM_TYPES.LINK) {
+            width = 180;
+            height = 75;
+            data = { text: "", color: ITEM_COLORS.STICKY_NOTE, fontSize: 16, title: "New Link" };
         }
         else {
             width = 180;
@@ -129,6 +135,9 @@ const CanvasBoard = () => {
         } else if (item.type === ITEM_TYPES.STICKY_NOTE) {
             updatedData.title = editingTitle;
             updatedData.text = editingText;
+        }else if (item.type === ITEM_TYPES.LINK) {
+            updatedData.title = editingTitle;
+            updatedData.url = editingUrl;
         }
 
         const updatedItem = {
@@ -274,7 +283,7 @@ const CanvasBoard = () => {
             setEditingTitle(data.title || "");
             setSelectedTool("select");
         }
-        if (item.type === ITEM_TYPES.GOAL_NOTE) {
+        else if (item.type === ITEM_TYPES.GOAL_NOTE) {
             setEditingId(item.id);
 
             // Ensure we correctly parse the item.data which may be a string or object
@@ -283,6 +292,12 @@ const CanvasBoard = () => {
             setEditingTitle(data.title || "");
             setEditingDescription(data.description || "");
             setEditingGoalDate(data.goalDate || "");
+            setSelectedTool("select");
+        }
+        else if (item.type === ITEM_TYPES.LINK) {
+            setEditingId(item.id);
+            setEditingTitle(item.data.title || "");
+            setEditingUrl(item.data.url || "");
             setSelectedTool("select");
         }
     };
@@ -442,6 +457,18 @@ const CanvasBoard = () => {
                 setEditingTitle={setEditingTitle}
                 editingText={editingText}
                 setEditingText={setEditingText}
+                items={items}
+                stageScale={canvas.stageScale}
+                stagePos={canvas.stagePos}
+                onSave={handleSave}
+            />
+
+            <LinkNoteEditor
+                editingId={editingId}
+                editingTitle={editingTitle}
+                setEditingTitle={setEditingTitle}
+                editingUrl={editingUrl}
+                setEditingUrl={setEditingUrl}
                 items={items}
                 stageScale={canvas.stageScale}
                 stagePos={canvas.stagePos}

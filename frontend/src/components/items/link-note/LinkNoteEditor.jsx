@@ -1,19 +1,19 @@
 import React, { useEffect, useRef } from "react";
 import { ITEM_TYPES } from "../../../constants/itemTypes";
 
-const StickyNoteEditor = ({
+const LinkNoteEditor = ({
     editingId,
     editingTitle,
-    editingText,
     setEditingTitle,
-    setEditingText,
+    editingUrl,
+    setEditingUrl,
     items,
     stageScale,
     stagePos,
-    onSave
+    onSave,
 }) => {
     const titleRef = useRef(null);
-    const textRef = useRef(null);
+    const urlRef = useRef(null);
 
     useEffect(() => {
         if (editingId && titleRef.current) {
@@ -24,26 +24,18 @@ const StickyNoteEditor = ({
     if (!editingId) return null;
 
     const item = items.find((i) => i.id === editingId);
-    if (!item || item.type !== ITEM_TYPES.STICKY_NOTE) return null;
-    
+    if (!item || item.type !== ITEM_TYPES.LINK) return null;
+
     const { x, y, width, height } = item;
     const left = x * stageScale + stagePos.x;
     const top = y * stageScale + stagePos.y;
     const scaledWidth = width * stageScale;
     const scaledHeight = height * stageScale;
-    const titleHeight = 32;
 
-    const handleTitleKeyDown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            textRef.current?.focus();
-        } else if (e.key === "Escape") {
-            e.preventDefault();
-            onSave();
-        }
-    };
+    const inputHeight = 32;
+    const spacing = 8;
 
-    const handleTextKeyDown = (e) => {
+    const handleKeyDown = (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             onSave();
@@ -55,52 +47,55 @@ const StickyNoteEditor = ({
 
     return (
         <>
+            {/* Title Input */}
             <input
                 ref={titleRef}
                 type="text"
-                value={editingTitle}
+                value={editingTitle || ""}
                 onChange={(e) => setEditingTitle(e.target.value)}
-                onKeyDown={handleTitleKeyDown}
+                onKeyDown={handleKeyDown}
+                placeholder="Link title"
                 style={{
                     position: "absolute",
                     top: `${top}px`,
                     left: `${left}px`,
                     width: `${scaledWidth}px`,
-                    height: `${titleHeight}px`,
-                    fontSize: `${item.data.fontSize * stageScale + 2}px`,
-                    background: item.data.color || "#fff59d",
-                    fontWeight: "bold",
-                    border: "2px solid #333",
+                    height: `${inputHeight}px`,
+                    fontSize: `${item.data.fontSize * stageScale || 14}px`,
+                    background: item.data.color || "#e9f2ff",
+                    border: "2px solid #0056b3",
                     padding: "4px 8px",
                     boxSizing: "border-box",
                     outline: "none",
-                    zIndex: 20
+                    zIndex: 20,
                 }}
             />
-            <textarea
-                ref={textRef}
-                value={editingText}
-                onChange={(e) => setEditingText(e.target.value)}
-                onKeyDown={handleTextKeyDown}
+
+            {/* URL Input */}
+            <input
+                ref={urlRef}
+                type="text"
+                value={editingUrl || ""}
+                onChange={(e) => setEditingUrl(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="https://example.com"
                 style={{
                     position: "absolute",
-                    top: `${top + titleHeight}px`,
+                    top: `${top + inputHeight + spacing}px`,
                     left: `${left}px`,
                     width: `${scaledWidth}px`,
-                    height: `${scaledHeight - titleHeight}px`,
-                    fontSize: `${item.data.fontSize * stageScale}px`,
-                    background: item.data.color || "#fff59d",
-                    border: "2px solid #333",
-                    borderTop: "none",
-                    padding: "8px",
+                    height: `${inputHeight}px`,
+                    fontSize: `${item.data.fontSize * stageScale || 14}px`,
+                    background: item.data.color || "#e9f2ff",
+                    border: "2px solid #0056b3",
+                    padding: "4px 8px",
                     boxSizing: "border-box",
                     outline: "none",
-                    resize: "none",
-                    zIndex: 10
+                    zIndex: 20,
                 }}
             />
         </>
     );
 };
 
-export default StickyNoteEditor;
+export default LinkNoteEditor;

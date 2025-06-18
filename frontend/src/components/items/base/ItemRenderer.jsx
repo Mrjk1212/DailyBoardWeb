@@ -4,6 +4,7 @@ import TodoList from "../todo-list/TodoList";
 import { ITEM_TYPES } from "../../../constants/itemTypes";
 import Calendar from "../calendar/Calendar";
 import GoalNote from "../goal-note/GoalNote";
+import LinkNote from "../link-note/LinkNote";
 
 const ItemRenderer = React.memo(({ 
     item, 
@@ -64,6 +65,20 @@ const ItemRenderer = React.memo(({
         case ITEM_TYPES.GOAL_NOTE:
         return (
             <GoalNote
+                item={item}
+                isSelected={isSelected}
+                onDragEnd={onDragEnd}
+                onSelect={onSelect}
+                onDoubleClick={onDoubleClick}
+                onResize={onResize}
+                isDraggable={isDraggable}
+                onDelete={onDelete}
+                onUpdate={onUpdate}
+            />
+        );
+        case ITEM_TYPES.LINK:
+        return (
+            <LinkNote
                 item={item}
                 isSelected={isSelected}
                 onDragEnd={onDragEnd}

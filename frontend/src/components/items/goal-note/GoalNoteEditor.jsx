@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { ITEM_TYPES } from "../../../constants/itemTypes";
 
 const GoalNoteEditor = ({
     editingId,
@@ -11,6 +12,7 @@ const GoalNoteEditor = ({
     stagePos,
     onSave,
 }) => {
+
     const descriptionRef = useRef(null);
     const dateRef = useRef(null);
 
@@ -23,7 +25,7 @@ const GoalNoteEditor = ({
     if (!editingId) return null;
 
     const item = items.find((i) => i.id === editingId);
-    if (!item) return null;
+    if (!item || item.type !== ITEM_TYPES.GOAL_NOTE) return null;
 
     const { x, y, width, height } = item;
     const left = x * stageScale + stagePos.x;

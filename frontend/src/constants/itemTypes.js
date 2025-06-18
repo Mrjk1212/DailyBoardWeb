@@ -12,5 +12,7 @@ export const DEFAULT_DIMENSIONS = {
     [ITEM_TYPES.STICKY_NOTE]: { width: 150, height: 120 },
     [ITEM_TYPES.TODO_LIST]: { width: 250, height: 300 },
     [ITEM_TYPES.GOAL_NOTE]: { width: 220, height: 180 },
-    [ITEM_TYPES.CALENDAR]: {width: 500, height: 500}
+    [ITEM_TYPES.CALENDAR]: {width: 500, height: 500},
+    [ITEM_TYPES.LINK]: {width: 500, height: 100},
+    [ITEM_TYPES.IMAGE]: {width: 500, height: 500}
 };

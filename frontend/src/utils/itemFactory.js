@@ -53,6 +53,16 @@ export const createNewItem = (type, x = 100, y = 100) => {
                 color: ITEM_COLORS.CALENDAR
             }
         };
+        case ITEM_TYPES.LINK:
+        return {
+            ...baseItem,
+            data: {
+                title: "Example Link",
+                text: "example.com",
+                fontSize: 16,
+                color: ITEM_COLORS.LINK
+            }
+        };
         default:
             return baseItem;
     }
