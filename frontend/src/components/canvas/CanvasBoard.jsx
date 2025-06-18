@@ -9,6 +9,7 @@ import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
 import { UI_COLORS } from "../../constants/colors";
 import CalendarEditor from '../items/calendar/CalendarEditor';
+import { Line } from 'react-konva';
 import { fetchItems, createItem, updateItem, deleteItem } from '../api/useApi';
 
 console.log('=== DEBUG IMPORTS ===');
@@ -38,6 +39,11 @@ const CanvasBoard = () => {
     const [resizeData, setResizeData] = useState(null);
     const resizeStartPos = useRef({ x: 0, y: 0 });
     const originalSize = useRef({ width: 0, height: 0 });
+    const [drawing, setDrawing] = useState(false);
+    const [lines, setLines] = useState([]);
+    const [penColor, setPenColor] = useState("#000000");
+    const [penSize, setPenSize] = useState(2);
+    const [isErasing, setIsErasing] = useState(false);
 
     useEffect(() => {
         fetchItems()
@@ -155,7 +161,11 @@ const CanvasBoard = () => {
     };
 
     const handleMouseMove = (e) => {
-        if (isResizing && resizeData) {
+
+        if (selectedTool === "draw" && drawing) {
+            setDrawing(false);
+        }
+        else if (isResizing && resizeData) {
             const stage = canvas.stageRef.current;
             const pointer = stage.getPointerPosition();
 
@@ -308,17 +318,64 @@ const CanvasBoard = () => {
                 y={canvas.stagePos.y}
                 onWheel={canvas.handleWheel}
                 onMouseDown={(e) => {
-                    canvas.handleMouseDown(e);
-                    const clickedOnEmpty = e.target === canvas.stageRef.current;
-                    if (clickedOnEmpty) {
-                        setSelectedId(null);
-                        setSelectedTool("select");
+                    const stage = canvas.stageRef.current;
+                    const transform = stage.getAbsoluteTransform().copy();
+                    transform.invert();
+                    const point = transform.point(stage.getPointerPosition());
+
+                    if (selectedTool === "free_draw") {
+                        setDrawing(true);
+                        setLines(prevLines => [
+                            ...prevLines,
+                            {
+                                points: [point.x, point.y],
+                                color: penColor,
+                                size: penSize,
+                                eraser: isErasing,
+                            }
+                        ]);
+                    } else {
+                        canvas.handleMouseDown(e);
+                        const clickedOnEmpty = e.target === canvas.stageRef.current;
+                        if (clickedOnEmpty) {
+                            setSelectedId(null);
+                            setSelectedTool("select");
+                        }
                     }
                 }}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
+                onMouseMove={(e) => {
+                    if (selectedTool === "free_draw" && drawing) {
+                        const stage = canvas.stageRef.current;
+                        const transform = stage.getAbsoluteTransform().copy();
+                        transform.invert();
+                        const point = transform.point(stage.getPointerPosition());
+                        setLines(prevLines => {
+                            const lastLine = prevLines[prevLines.length - 1];
+                            if (!lastLine) return prevLines;
+
+                            const updatedLine = {
+                                ...lastLine,
+                                points: lastLine.points.concat([point.x, point.y]),
+                            };
+
+                            return [...prevLines.slice(0, -1), updatedLine];
+                        });
+                    } else {
+                        handleMouseMove(e);
+                    }
+                }}
+                onMouseUp={(e) => {
+                    if (selectedTool === "free_draw" && drawing) {
+                        setDrawing(false);
+                    } else {
+                        handleMouseUp(e);
+                    }
+                }}
                 ref={canvas.stageRef}
-                style={{ background: UI_COLORS.BACKGROUND, cursor: isResizing ? 'nw-resize' : 'default' }}
+                style={{
+                    background: UI_COLORS.BACKGROUND,
+                    cursor: isResizing ? 'nw-resize' : selectedTool === 'free_draw' ? 'crosshair' : 'default',
+                }}
             >
                 <Layer>
                     <Grid />
@@ -339,7 +396,21 @@ const CanvasBoard = () => {
                         />
                     ))}
                 </Layer>
+                <Layer>
+                {lines.map((line, i) => (
+                    <Line
+                        key={i}
+                        points={line.points}
+                        stroke={line.color}
+                        strokeWidth={line.size}
+                        tension={0.5}
+                        lineCap="round"
+                        globalCompositeOperation={line.eraser ? "destination-out" : "source-over"}
+                    />
+                ))}
+            </Layer>
             </Stage>
+
 
             <StickyNoteEditor
                 editingId={editingId}
