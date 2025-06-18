@@ -1,7 +1,7 @@
 export const ITEM_COLORS = {
-    STICKY_NOTE: '#fff59d',
-    TODO_LIST: '#c8e6c9',
-    GOAL_NOTE: '#ffcdd2',
+    STICKY_NOTE: '#FEEBF6',
+    TODO_LIST: '#EBD6FB',
+    GOAL_NOTE: '#FCD8CD',
     SELECTED: '#ffeb3b'
 };
 

@@ -3,6 +3,7 @@ import StickyNote from "../sticky-note/StickyNote";
 import TodoList from "../todo-list/TodoList";
 import { ITEM_TYPES } from "../../../constants/itemTypes";
 import Calendar from "../calendar/Calendar";
+import GoalNote from "../goal-note/GoalNote";
 
 const ItemRenderer = React.memo(({ 
     item, 
@@ -60,6 +61,20 @@ const ItemRenderer = React.memo(({
                     onUpdate={onUpdate}
                 />
             );
+        case ITEM_TYPES.GOAL_NOTE:
+        return (
+            <GoalNote
+                item={item}
+                isSelected={isSelected}
+                onDragEnd={onDragEnd}
+                onSelect={onSelect}
+                onDoubleClick={onDoubleClick}
+                onResize={onResize}
+                isDraggable={isDraggable}
+                onDelete={onDelete}
+                onUpdate={onUpdate}
+            />
+        );
         default:
             return null;
     }

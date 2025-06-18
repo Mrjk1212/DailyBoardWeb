@@ -7,8 +7,10 @@ import Grid from "./Grid";
 import Toolbar from "../toolbar/Toolbar";
 import StickyNoteEditor from "../items/sticky-note/StickyNoteEditor";
 import { ITEM_TYPES } from "../../constants/itemTypes";
-import { UI_COLORS } from "../../constants/colors";
+import { ITEM_COLORS, UI_COLORS } from "../../constants/colors";
 import CalendarEditor from '../items/calendar/CalendarEditor';
+import GoalNote from '../items/goal-note/GoalNote';
+import GoalNoteEditor from '../items/goal-note/GoalNoteEditor';
 import { Line } from 'react-konva';
 import { fetchItems, createItem, updateItem, deleteItem } from '../api/useApi';
 
@@ -41,9 +43,9 @@ const CanvasBoard = () => {
     const originalSize = useRef({ width: 0, height: 0 });
     const [drawing, setDrawing] = useState(false);
     const [lines, setLines] = useState([]);
-    const [penColor, setPenColor] = useState("#000000");
-    const [penSize, setPenSize] = useState(2);
-    const [isErasing, setIsErasing] = useState(false);
+    const [editingDescription, setEditingDescription] = useState("");
+    const [editingGoalDate, setEditingGoalDate] = useState("");
+
 
     useEffect(() => {
         fetchItems()
@@ -68,8 +70,18 @@ const CanvasBoard = () => {
         if (itemType === ITEM_TYPES.TODO_LIST) {
             width = 220;
             height = 200;
-            data = { title: "Todo List", todos: ["Task 1", "Task 2"] };
-        } else {
+            data = { title: "Todo List", todos: ["Task 1", "Task 2"], color: ITEM_COLORS.TODO_LIST };
+        }
+        else if (itemType === ITEM_TYPES.GOAL_NOTE) {
+            width = 220;
+            height = 150;
+            data = { title: "Goal", description: "", goalDate: "" , color: ITEM_COLORS.GOAL_NOTE};
+        } else if (itemType === ITEM_TYPES.STICKY_NOTE) {
+            width = 180;
+            height = 140;
+            data = { text: "", color: "#fff59d", fontSize: 16, title: "New Note" };
+        }
+        else {
             width = 180;
             height = 140;
             data = { text: "", color: "#fff59d", fontSize: 16, title: "New Note" };
@@ -108,30 +120,34 @@ const CanvasBoard = () => {
 
         const currentData = typeof item.data === "string" ? JSON.parse(item.data) : item.data || {};
 
+        let updatedData = { ...currentData };
+
+        if (item.type === ITEM_TYPES.GOAL_NOTE) {
+            updatedData.title = editingTitle;
+            updatedData.description = editingDescription;
+            updatedData.goalDate = editingGoalDate;
+        } else if (item.type === ITEM_TYPES.STICKY_NOTE) {
+            updatedData.title = editingTitle;
+            updatedData.text = editingText;
+        }
+
         const updatedItem = {
             ...item,
-            data: {
-                ...currentData,
-                title: editingTitle,
-                text: editingText,
-            },
+            data: updatedData,
         };
 
         try {
             const updated = await updateItem({
                 ...updatedItem,
-                data: JSON.stringify(updatedItem.data)
+                data: JSON.stringify(updatedData),
             });
 
-            // Only trust backend's data if it returns valid x/y
             setItems(prev => prev.map(i =>
                 i.id === updated.id
                     ? {
                         ...i,
                         ...updated,
-                        x: updated.x ?? i.x,
-                        y: updated.y ?? i.y,
-                        data: typeof updated.data === 'string' ? JSON.parse(updated.data) : updated.data
+                        data: typeof updated.data === 'string' ? JSON.parse(updated.data) : updated.data,
                     }
                     : i
             ));
@@ -258,6 +274,17 @@ const CanvasBoard = () => {
             setEditingTitle(data.title || "");
             setSelectedTool("select");
         }
+        if (item.type === ITEM_TYPES.GOAL_NOTE) {
+            setEditingId(item.id);
+
+            // Ensure we correctly parse the item.data which may be a string or object
+            const data = typeof item.data === 'string' ? JSON.parse(item.data) : item.data || {};
+
+            setEditingTitle(data.title || "");
+            setEditingDescription(data.description || "");
+            setEditingGoalDate(data.goalDate || "");
+            setSelectedTool("select");
+        }
     };
 
     const handleDragEnd = async (id, x, y) => {
@@ -329,9 +356,6 @@ const CanvasBoard = () => {
                             ...prevLines,
                             {
                                 points: [point.x, point.y],
-                                color: penColor,
-                                size: penSize,
-                                eraser: isErasing,
                             }
                         ]);
                     } else {
@@ -397,18 +421,18 @@ const CanvasBoard = () => {
                     ))}
                 </Layer>
                 <Layer>
-                {lines.map((line, i) => (
-                    <Line
-                        key={i}
-                        points={line.points}
-                        stroke={line.color}
-                        strokeWidth={line.size}
-                        tension={0.5}
-                        lineCap="round"
-                        globalCompositeOperation={line.eraser ? "destination-out" : "source-over"}
-                    />
-                ))}
-            </Layer>
+                    {lines.map((line, i) => (
+                        <Line
+                            key={i}
+                            points={line.points}
+                            stroke={line.color}
+                            strokeWidth={line.size}
+                            tension={0.5}
+                            lineCap="round"
+                            globalCompositeOperation={line.eraser ? "destination-out" : "source-over"}
+                        />
+                    ))}
+                </Layer>
             </Stage>
 
 
@@ -418,6 +442,20 @@ const CanvasBoard = () => {
                 setEditingTitle={setEditingTitle}
                 editingText={editingText}
                 setEditingText={setEditingText}
+                items={items}
+                stageScale={canvas.stageScale}
+                stagePos={canvas.stagePos}
+                onSave={handleSave}
+            />
+
+            <GoalNoteEditor
+                editingId={editingId}
+                editingTitle={editingTitle}
+                setEditingTitle={setEditingTitle}
+                editingDescription={editingDescription}
+                setEditingDescription={setEditingDescription}
+                editingGoalDate={editingGoalDate}
+                setEditingGoalDate={setEditingGoalDate}
                 items={items}
                 stageScale={canvas.stageScale}
                 stagePos={canvas.stagePos}
