@@ -32,6 +32,7 @@ const CanvasBoard = () => {
     const canvas = useCanvas();
 
     const [items, setItems] = useState([]);
+    const [history, setHistory] = useState([]);
     const [editingId, setEditingId] = useState(null);
     const [editingText, setEditingText] = useState("");
     const [editingTitle, setEditingTitle] = useState("");
@@ -76,7 +77,7 @@ const CanvasBoard = () => {
         else if (itemType === ITEM_TYPES.GOAL_NOTE) {
             width = 220;
             height = 150;
-            data = { title: "Goal", description: "", goalDate: "" , color: ITEM_COLORS.GOAL_NOTE};
+            data = { title: "Goal", description: "", goalDate: "", color: ITEM_COLORS.GOAL_NOTE };
         } else if (itemType === ITEM_TYPES.STICKY_NOTE) {
             width = 180;
             height = 140;
@@ -116,6 +117,8 @@ const CanvasBoard = () => {
                     data: typeof saved.data === 'string' ? JSON.parse(saved.data) : saved.data,
                 },
             ]);
+
+            pushToHistory('add', saved);
         } catch (err) {
             console.error("Failed to add item:", err);
         }
@@ -123,7 +126,7 @@ const CanvasBoard = () => {
     const handleSave = async () => {
         const item = items.find(i => i.id === editingId);
         if (!item) return;
-
+        pushToHistory('update', item);
         const currentData = typeof item.data === "string" ? JSON.parse(item.data) : item.data || {};
 
         let updatedData = { ...currentData };
@@ -135,7 +138,7 @@ const CanvasBoard = () => {
         } else if (item.type === ITEM_TYPES.STICKY_NOTE) {
             updatedData.title = editingTitle;
             updatedData.text = editingText;
-        }else if (item.type === ITEM_TYPES.LINK) {
+        } else if (item.type === ITEM_TYPES.LINK) {
             updatedData.title = editingTitle;
             updatedData.url = editingUrl;
         }
@@ -161,10 +164,55 @@ const CanvasBoard = () => {
                     : i
             ));
 
+
+
             setEditingId(null);
         } catch (err) {
             console.error("Failed to save item:", err);
         }
+    };
+
+    const pushToHistory = (type, item) => {
+        setHistory(prev => [...prev, { type, item }]);
+    }
+
+    const handleUndo = async () => {
+        setHistory(prev => {
+            if (prev.length === 0) return prev;
+
+            const lastAction = prev[prev.length - 1];
+
+            if (lastAction.type === 'delete') {
+                createItem({
+                    ...lastAction.item,
+                    data: JSON.stringify(lastAction.item.data),
+                }).then(created => {
+                    const parsedCreated = {
+                        ...created,
+                        data: typeof created.data === 'string' ? JSON.parse(created.data) : created.data
+                    };
+
+                    setItems(prevItems => {
+                        // Remove any item with the deleted item's id (old one), then add restored
+                        const filtered = prevItems.filter(i => i.id !== lastAction.item.id);
+                        return [...filtered, parsedCreated];
+                    });
+                }).catch(console.error);
+            } else if (lastAction.type === 'add') {
+                deleteItem(lastAction.item.id).then(() => {
+                    setItems(prevItems => prevItems.filter(i => i.id !== lastAction.item.id));
+                }).catch(console.error);
+            } else if (lastAction.type === 'update') {
+                updateItem({
+                    ...lastAction.item,
+                    data: JSON.stringify(lastAction.item.data),
+                }).then(updated => {
+                    setItems(prevItems => prevItems.map(i => i.id === updated.id ? updated : i));
+                }).catch(console.error);
+            }
+
+            return prev.slice(0, -1);
+        });
     };
 
     const handleResizeStart = (itemId, corner, e) => {
@@ -186,7 +234,6 @@ const CanvasBoard = () => {
     };
 
     const handleMouseMove = (e) => {
-
         if (selectedTool === "draw" && drawing) {
             setDrawing(false);
         }
@@ -230,6 +277,7 @@ const CanvasBoard = () => {
 
             const item = items.find(i => i.id === resizeData.itemId);
             if (item) {
+                pushToHistory('update', item);
                 try {
                     const updated = await updateItem({
                         ...item,
@@ -252,16 +300,24 @@ const CanvasBoard = () => {
     };
 
     const handleDelete = async (id) => {
+        const itemToDelete = items.find(i => i.id === id);
+        if (!itemToDelete) return;
+
+        pushToHistory('delete', itemToDelete);
+
         try {
-            await deleteItem(id); // id should be a string or number, not an object
+            await deleteItem(id);
             setItems(prev => prev.filter(i => i.id !== id));
-            if (editingId === id) setEditingId(null);
         } catch (err) {
             console.error("Failed to delete item:", err);
         }
     };
 
     const handleUpdate = async (updatedItem) => {
+        const oldItem = items.find(i => i.id === updatedItem.id);
+        if (oldItem) {
+            pushToHistory('update', oldItem);
+        }
         try {
             const updated = await updateItem({
                 ...updatedItem,
@@ -303,6 +359,11 @@ const CanvasBoard = () => {
     };
 
     const handleDragEnd = async (id, x, y) => {
+        const oldItem = items.find(i => i.id === id);
+        if (oldItem) {
+            pushToHistory('update', oldItem);
+        }
+
         const item = items.find(i => i.id === id);
         if (!item) return;
 
@@ -349,6 +410,7 @@ const CanvasBoard = () => {
                 selectedTool={selectedTool}
                 setSelectedTool={setSelectedTool}
                 onDelete={() => handleDelete(selectedId)}
+                onUndo={handleUndo}
             />
 
             <Stage

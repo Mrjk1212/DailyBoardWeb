@@ -3,7 +3,7 @@ import { ITEM_TYPES } from '../../constants/itemTypes';
 
 //TOOLBAR IS NOT RESPONSIVE AND DOES NOT COLLAPSE FOR SMALLER DEVICES
 
-const Toolbar = ({ onAddItem, selectedTool, setSelectedTool, onDelete }) => {
+const Toolbar = ({ onAddItem, selectedTool, setSelectedTool, onDelete, onUndo}) => {
     const tools = [
         {
             id: 'select',
@@ -129,7 +129,7 @@ const Toolbar = ({ onAddItem, selectedTool, setSelectedTool, onDelete }) => {
                     <button className="action-button duplicate" title="Duplicate selected item">
                         📋 Copy
                     </button>
-                    <button className="action-button undo" title="Undo">
+                    <button className="action-button undo" title="Undo" onClick={onUndo} >
                         🧹 Undo
                     </button>
                 </div>
