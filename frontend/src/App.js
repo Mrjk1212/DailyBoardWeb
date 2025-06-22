@@ -4,11 +4,29 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import CanvasBoard from './components/canvas/CanvasBoard';
 import Login from './components/auth/Login';
 
+
+import {jwtDecode} from 'jwt-decode';
+
+function isTokenExpired(token) {
+  if (!token) return true;
+  try {
+    const { exp } = jwtDecode(token); // exp is in seconds since epoch
+    if (!exp) return true;
+    const now = Date.now() / 1000; // current time in seconds
+    return exp < now;
+  } catch {
+    return true; // If decoding fails, treat as expired
+  }
+}
+
 const RequireAuth = ({ children }) => {
   const token = localStorage.getItem('authToken');
-  if (!token) {
+
+  if (!token || isTokenExpired(token)) {
+    localStorage.clear(); // clear any old tokens or data
     return <Navigate to="/login" replace />;
   }
+
   return children;
 };
 
