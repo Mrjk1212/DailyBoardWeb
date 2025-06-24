@@ -1,9 +1,16 @@
 package com.backenddailyboard.dailyboard.model;
 
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "canvas_items")
+@JsonInclude(Include.ALWAYS)
 public class CanvasItem {
 
     @Id
@@ -16,6 +23,7 @@ public class CanvasItem {
     private double width;
     private double height;
     private int zIndex;
+    private boolean deleted = false;
 
     @Column(columnDefinition = "TEXT")
     private String data;
@@ -25,7 +33,10 @@ public class CanvasItem {
     private User user;
 
     @Column(name = "user_id", insertable = false, updatable = false)
-    private Long userId;  // <-- add this!
+    private Long userId; // <-- add this!
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date deletedAt;
 
     public CanvasItem() {
     }
@@ -42,6 +53,23 @@ public class CanvasItem {
     }
 
     // Getters and setters
+    
+    @JsonProperty("deleted")
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public Date getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Date deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 
     public Long getId() {
         return id;
@@ -107,12 +135,12 @@ public class CanvasItem {
         this.data = data;
     }
 
-    public User getUser() { 
-        return user; 
+    public User getUser() {
+        return user;
     }
 
-    public void setUser(User user) { 
-        this.user = user; 
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public Long getUserId() {

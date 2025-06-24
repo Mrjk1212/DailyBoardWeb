@@ -29,6 +29,12 @@ export async function createItem(item) {
         },
         body: JSON.stringify(item),
     });
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Failed to create item: ${res.status} - ${text}`);
+    }
+
     return res.json();
 }
 
@@ -52,13 +58,21 @@ export const updateItem = async (item) => {
 export async function deleteItem(id) {
     const res = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
-        headers: getAuthHeaders(),
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
     });
+    if (!res.ok) throw new Error('Failed to soft delete item');
+}
 
-    if (!res.ok) {
-        throw new Error('Failed to delete item');
-    }
-    return;
+export async function undeleteItem(id) {
+    const res = await fetch(`${API_URL}/${id}/undelete`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+    });
+    if (!res.ok) throw new Error('Failed to undelete item');
 }
 
 // Add user info fetch
@@ -69,10 +83,10 @@ export async function fetchUserInfo() {
             ...getAuthHeaders(),
         },
     });
-    
+
     if (!res.ok) {
         throw new Error('Failed to fetch user info');
     }
-    
+
     return res.json();
 }

@@ -11,7 +11,7 @@ import { ITEM_COLORS, UI_COLORS } from "../../constants/colors";
 import CalendarEditor from '../items/calendar/CalendarEditor';
 import GoalNoteEditor from '../items/goal-note/GoalNoteEditor';
 import { Line } from 'react-konva';
-import { fetchItems, createItem, updateItem, deleteItem } from '../api/useApi';
+import { fetchItems, createItem, updateItem, deleteItem, undeleteItem } from '../api/useApi';
 import LinkNoteEditor from '../items/link-note/LinkNoteEditor';
 
 console.log('=== DEBUG IMPORTS ===');
@@ -183,21 +183,24 @@ const CanvasBoard = () => {
             const lastAction = prev[prev.length - 1];
 
             if (lastAction.type === 'delete') {
-                createItem({
-                    ...lastAction.item,
-                    data: JSON.stringify(lastAction.item.data),
-                }).then(created => {
-                    const parsedCreated = {
-                        ...created,
-                        data: typeof created.data === 'string' ? JSON.parse(created.data) : created.data
-                    };
+                undeleteItem(lastAction.item.id)
+                    .then(() => {
+                        const restoredItem = {
+                            ...lastAction.item,
+                            deleted: false,
+                            deletedAt: null,
+                        };
 
-                    setItems(prevItems => {
-                        // Remove any item with the deleted item's id (old one), then add restored
-                        const filtered = prevItems.filter(i => i.id !== lastAction.item.id);
-                        return [...filtered, parsedCreated];
-                    });
-                }).catch(console.error);
+                        setItems(prevItems => {
+                            const exists = prevItems.some(i => i.id === restoredItem.id);
+                            if (exists) {
+                                return prevItems.map(i => i.id === restoredItem.id ? restoredItem : i);
+                            } else {
+                                return [...prevItems, restoredItem];
+                            }
+                        });
+                    })
+                    .catch(console.error);
             } else if (lastAction.type === 'add') {
                 deleteItem(lastAction.item.id).then(() => {
                     setItems(prevItems => prevItems.filter(i => i.id !== lastAction.item.id));
@@ -306,8 +309,8 @@ const CanvasBoard = () => {
         pushToHistory('delete', itemToDelete);
 
         try {
-            await deleteItem(id);
-            setItems(prev => prev.filter(i => i.id !== id));
+            await deleteItem(id); // <- backend sets deleted=true
+            setItems(prev => prev.filter(i => i.id !== id)); // <- frontend removes it from UI
         } catch (err) {
             console.error("Failed to delete item:", err);
         }
@@ -482,20 +485,22 @@ const CanvasBoard = () => {
                     <Grid />
                 </Layer>
                 <Layer>
-                    {items.map(item => (
-                        <ItemRenderer
-                            key={item.id}
-                            item={item}
-                            isSelected={selectedId === item.id}
-                            onDragEnd={(id, x, y) => handleDragEnd(id, x, y)}
-                            onSelect={() => setSelectedId(item.id)}
-                            onDoubleClick={() => handleDoubleClick(item)}
-                            onResize={handleResizeStart}
-                            isDraggable={!isResizing}
-                            onDelete={() => handleDelete(item.id)}
-                            onUpdate={handleUpdate}
-                        />
-                    ))}
+                    {items
+                        .filter(item => !item.deleted)
+                        .map(item => (
+                            <ItemRenderer
+                                key={item.id}
+                                item={item}
+                                isSelected={selectedId === item.id}
+                                onDragEnd={(id, x, y) => handleDragEnd(id, x, y)}
+                                onSelect={() => setSelectedId(item.id)}
+                                onDoubleClick={() => handleDoubleClick(item)}
+                                onResize={handleResizeStart}
+                                isDraggable={!isResizing}
+                                onDelete={() => handleDelete(item.id)}
+                                onUpdate={handleUpdate}
+                            />
+                        ))}
                 </Layer>
                 <Layer>
                     {lines.map((line, i) => (

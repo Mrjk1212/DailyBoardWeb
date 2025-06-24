@@ -1,5 +1,6 @@
 package com.backenddailyboard.dailyboard.controller;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,47 +30,75 @@ public class CanvasItemController {
 
     @GetMapping
     public ResponseEntity<List<CanvasItemDTO>> getCanvasItems() {
-        // Get current authenticated user's Google ID from JWT
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String googleId = auth.getName();
-        
-        // Find user by Google ID
+
         Optional<User> userOptional = userRepository.findByGoogleId(googleId);
         if (userOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         User user = userOptional.get();
         List<CanvasItem> items = canvasItemRepository.findAllByUserId(user.getId());
 
         List<CanvasItemDTO> itemDTOs = items.stream()
-            .map(item -> new CanvasItemDTO(
-                item.getId(),
-                item.getType(),
-                item.getX(),
-                item.getY(),
-                item.getWidth(),
-                item.getHeight(),
-                item.getZIndex(),
-                item.getData()
-            ))
-            .collect(Collectors.toList());
-            
+                .map(item -> new CanvasItemDTO(
+                        item.getId(),
+                        item.getType(),
+                        item.getX(),
+                        item.getY(),
+                        item.getWidth(),
+                        item.getHeight(),
+                        item.getZIndex(),
+                        item.getData(),
+                        item.isDeleted() // Pass deleted flag here!
+                ))
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(itemDTOs);
+    }
+
+    @PutMapping("/{id}/undelete")
+    public ResponseEntity<Void> undeleteCanvasItem(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String googleId = auth.getName();
+
+        Optional<User> userOptional = userRepository.findByGoogleId(googleId);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User user = userOptional.get();
+
+        Optional<CanvasItem> itemOptional = canvasItemRepository.findById(id);
+        if (itemOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        CanvasItem item = itemOptional.get();
+        if (item.getUserId() == null || !item.getUserId().equals(user.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+
+        item.setDeleted(false);
+        item.setDeletedAt(null);
+        canvasItemRepository.save(item);
+
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping
     public ResponseEntity<CanvasItemDTO> createCanvasItem(@RequestBody CanvasItemCreateDTO createDTO) {
         // Get current authenticated user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String googleId = auth.getName();        
+        String googleId = auth.getName();
         Optional<User> userOptional = userRepository.findByGoogleId(googleId);
         if (userOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         User user = userOptional.get();
-        
+
         // Create new canvas item
         CanvasItem item = new CanvasItem();
         item.setType(createDTO.getType());
@@ -80,47 +109,48 @@ public class CanvasItemController {
         item.setZIndex(createDTO.getZIndex());
         item.setData(createDTO.getData());
         item.setUser(user); // Associate with current user
-        
+
         CanvasItem savedItem = canvasItemRepository.save(item);
-        
+
         CanvasItemDTO responseDTO = new CanvasItemDTO(
-            savedItem.getId(),
-            savedItem.getType(),
-            savedItem.getX(),
-            savedItem.getY(),
-            savedItem.getWidth(),
-            savedItem.getHeight(),
-            savedItem.getZIndex(),
-            savedItem.getData()
-        );
-        
+                savedItem.getId(),
+                savedItem.getType(),
+                savedItem.getX(),
+                savedItem.getY(),
+                savedItem.getWidth(),
+                savedItem.getHeight(),
+                savedItem.getZIndex(),
+                savedItem.getData(),
+                savedItem.isDeleted());
+
         return ResponseEntity.ok(responseDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CanvasItemDTO> updateCanvasItem(@PathVariable Long id, @RequestBody CanvasItemUpdateDTO updateDTO) {
+    public ResponseEntity<CanvasItemDTO> updateCanvasItem(@PathVariable Long id,
+            @RequestBody CanvasItemUpdateDTO updateDTO) {
         // Get current authenticated user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String googleId = auth.getName();
-        
+
         Optional<User> userOptional = userRepository.findByGoogleId(googleId);
         if (userOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         User user = userOptional.get();
-        
+
         // Find item and verify ownership
         Optional<CanvasItem> itemOptional = canvasItemRepository.findById(id);
         if (itemOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         CanvasItem item = itemOptional.get();
         if (!item.getUserId().equals(user.getId())) {
             return ResponseEntity.status(403).build(); // Forbidden - not the owner
         }
-        
+
         // Update item
         item.setType(updateDTO.getType());
         item.setX(updateDTO.getX());
@@ -129,48 +159,60 @@ public class CanvasItemController {
         item.setHeight(updateDTO.getHeight());
         item.setZIndex(updateDTO.getZIndex());
         item.setData(updateDTO.getData());
-        
+
         CanvasItem savedItem = canvasItemRepository.save(item);
-        
+
         CanvasItemDTO responseDTO = new CanvasItemDTO(
-            savedItem.getId(),
-            savedItem.getType(),
-            savedItem.getX(),
-            savedItem.getY(),
-            savedItem.getWidth(),
-            savedItem.getHeight(),
-            savedItem.getZIndex(),
-            savedItem.getData()
-        );
-        
+                savedItem.getId(),
+                savedItem.getType(),
+                savedItem.getX(),
+                savedItem.getY(),
+                savedItem.getWidth(),
+                savedItem.getHeight(),
+                savedItem.getZIndex(),
+                savedItem.getData(),
+                savedItem.isDeleted());
+
         return ResponseEntity.ok(responseDTO);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCanvasItem(@PathVariable Long id) {
-        // Get current authenticated user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String googleId = auth.getName();
-        
+
         Optional<User> userOptional = userRepository.findByGoogleId(googleId);
         if (userOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         User user = userOptional.get();
-        
-        // Find item and verify ownership
+
         Optional<CanvasItem> itemOptional = canvasItemRepository.findById(id);
         if (itemOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         CanvasItem item = itemOptional.get();
-        if (!item.getUserId().equals(user.getId())) {
-            return ResponseEntity.status(403).build(); // Forbidden - not the owner
+        if (item.getUserId() == null || !item.getUserId().equals(user.getId())) {
+            return ResponseEntity.status(403).build();
         }
-        
-        canvasItemRepository.delete(item);
+
+        // Soft-delete
+        item.setDeleted(true);
+        item.setDeletedAt(new Date());
+        canvasItemRepository.save(item);
+
+        // Enforce FILO stack size
+        final int MAX_SOFT_DELETED = 10;
+        List<CanvasItem> softDeletedItems = canvasItemRepository.findSoftDeletedItems(user.getId());
+
+        if (softDeletedItems.size() > MAX_SOFT_DELETED) {
+            int toRemove = softDeletedItems.size() - MAX_SOFT_DELETED;
+            List<CanvasItem> toDelete = softDeletedItems.subList(0, toRemove);
+            canvasItemRepository.deleteAll(toDelete);
+        }
+
         return ResponseEntity.ok().build();
     }
 
@@ -184,8 +226,10 @@ public class CanvasItemController {
         private double height;
         private int zIndex;
         private String data;
+        private Boolean deleted;
 
-        public CanvasItemDTO(Long id, String type, double x, double y, double width, double height, int zIndex, String data) {
+        public CanvasItemDTO(Long id, String type, double x, double y, double width, double height, int zIndex,
+                String data, Boolean deleted) {
             this.id = id;
             this.type = type;
             this.x = x;
@@ -194,32 +238,81 @@ public class CanvasItemController {
             this.height = height;
             this.zIndex = zIndex;
             this.data = data;
+            this.deleted = deleted;
         }
 
         // Getters and setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
+        public Boolean getDeleted(){
+            return deleted;
+        }
 
-        public String getType() { return type; }
-        public void setType(String type) { this.type = type; }
+        public void setDeleted(Boolean deleted){
+            this.deleted = deleted;
+        }
 
-        public double getX() { return x; }
-        public void setX(double x) { this.x = x; }
+        public Long getId() {
+            return id;
+        }
 
-        public double getY() { return y; }
-        public void setY(double y) { this.y = y; }
+        public void setId(Long id) {
+            this.id = id;
+        }
 
-        public double getWidth() { return width; }
-        public void setWidth(double width) { this.width = width; }
+        public String getType() {
+            return type;
+        }
 
-        public double getHeight() { return height; }
-        public void setHeight(double height) { this.height = height; }
+        public void setType(String type) {
+            this.type = type;
+        }
 
-        public int getZIndex() { return zIndex; }
-        public void setZIndex(int zIndex) { this.zIndex = zIndex; }
+        public double getX() {
+            return x;
+        }
 
-        public String getData() { return data; }
-        public void setData(String data) { this.data = data; }
+        public void setX(double x) {
+            this.x = x;
+        }
+
+        public double getY() {
+            return y;
+        }
+
+        public void setY(double y) {
+            this.y = y;
+        }
+
+        public double getWidth() {
+            return width;
+        }
+
+        public void setWidth(double width) {
+            this.width = width;
+        }
+
+        public double getHeight() {
+            return height;
+        }
+
+        public void setHeight(double height) {
+            this.height = height;
+        }
+
+        public int getZIndex() {
+            return zIndex;
+        }
+
+        public void setZIndex(int zIndex) {
+            this.zIndex = zIndex;
+        }
+
+        public String getData() {
+            return data;
+        }
+
+        public void setData(String data) {
+            this.data = data;
+        }
     }
 
     // DTO for creating items (no ID needed)
@@ -233,26 +326,61 @@ public class CanvasItemController {
         private String data;
 
         // Getters and setters
-        public String getType() { return type; }
-        public void setType(String type) { this.type = type; }
+        public String getType() {
+            return type;
+        }
 
-        public double getX() { return x; }
-        public void setX(double x) { this.x = x; }
+        public void setType(String type) {
+            this.type = type;
+        }
 
-        public double getY() { return y; }
-        public void setY(double y) { this.y = y; }
+        public double getX() {
+            return x;
+        }
 
-        public double getWidth() { return width; }
-        public void setWidth(double width) { this.width = width; }
+        public void setX(double x) {
+            this.x = x;
+        }
 
-        public double getHeight() { return height; }
-        public void setHeight(double height) { this.height = height; }
+        public double getY() {
+            return y;
+        }
 
-        public int getZIndex() { return zIndex; }
-        public void setZIndex(int zIndex) { this.zIndex = zIndex; }
+        public void setY(double y) {
+            this.y = y;
+        }
 
-        public String getData() { return data; }
-        public void setData(String data) { this.data = data; }
+        public double getWidth() {
+            return width;
+        }
+
+        public void setWidth(double width) {
+            this.width = width;
+        }
+
+        public double getHeight() {
+            return height;
+        }
+
+        public void setHeight(double height) {
+            this.height = height;
+        }
+
+        public int getZIndex() {
+            return zIndex;
+        }
+
+        public void setZIndex(int zIndex) {
+            this.zIndex = zIndex;
+        }
+
+        public String getData() {
+            return data;
+        }
+
+        public void setData(String data) {
+            this.data = data;
+        }
     }
 
     // DTO for updating items (no ID in body, comes from path)
@@ -264,27 +392,81 @@ public class CanvasItemController {
         private double height;
         private int zIndex;
         private String data;
+        private Boolean deleted;
+        private Date deletedAt;
 
         // Getters and setters
-        public String getType() { return type; }
-        public void setType(String type) { this.type = type; }
 
-        public double getX() { return x; }
-        public void setX(double x) { this.x = x; }
+        public Boolean getDeleted() {
+            return deleted;
+        }
 
-        public double getY() { return y; }
-        public void setY(double y) { this.y = y; }
+        public void setDeleted(boolean deleted) {
+            this.deleted = deleted;
+        }
 
-        public double getWidth() { return width; }
-        public void setWidth(double width) { this.width = width; }
+        public Date getDeletedAt() {
+            return deletedAt;
+        }
 
-        public double getHeight() { return height; }
-        public void setHeight(double height) { this.height = height; }
+        public void setDeletedAt(Date deletedAt) {
+            this.deletedAt = deletedAt;
+        }
 
-        public int getZIndex() { return zIndex; }
-        public void setZIndex(int zIndex) { this.zIndex = zIndex; }
+        public String getType() {
+            return type;
+        }
 
-        public String getData() { return data; }
-        public void setData(String data) { this.data = data; }
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public double getX() {
+            return x;
+        }
+
+        public void setX(double x) {
+            this.x = x;
+        }
+
+        public double getY() {
+            return y;
+        }
+
+        public void setY(double y) {
+            this.y = y;
+        }
+
+        public double getWidth() {
+            return width;
+        }
+
+        public void setWidth(double width) {
+            this.width = width;
+        }
+
+        public double getHeight() {
+            return height;
+        }
+
+        public void setHeight(double height) {
+            this.height = height;
+        }
+
+        public int getZIndex() {
+            return zIndex;
+        }
+
+        public void setZIndex(int zIndex) {
+            this.zIndex = zIndex;
+        }
+
+        public String getData() {
+            return data;
+        }
+
+        public void setData(String data) {
+            this.data = data;
+        }
     }
 }
