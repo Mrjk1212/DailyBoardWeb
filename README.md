@@ -107,5 +107,16 @@ Configure the following environment variables for your backend and frontend as n
 - REACT_APP_GOOGLE_CLIENT_ID — Google OAuth client ID (for frontend use)
 
 
+### More
+
+__Git commit syle guide:__
+Commits should start with one of the following
+- Feat: This is feature work and implementations.
+- Fix: This is a fix commit when you are fixing something (wow).
+- Doc: This is a documentation change.
+- Env: This is a change to the environement, almost should never see this because we don't want much of our enviroment exposed.
+- QOL: This means a Quality Of Life change. this could either be a very small 1-10 line visual change on the frontend or something like that.
+
+
 # License
 This project is licensed under the MIT License.
