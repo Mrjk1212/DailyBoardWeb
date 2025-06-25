@@ -129,6 +129,11 @@ const TodoList = ({
                             <input
                                 type="text"
                                 value={newTask}
+                                onKeyDown={(e) => {
+                                    if(e.key === 'Enter'){
+                                        handleAddTask();
+                                    }
+                                }}
                                 onChange={(e) => setNewTask(e.target.value)}
                                 placeholder="New task"
                                 style={{
