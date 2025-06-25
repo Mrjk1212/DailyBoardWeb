@@ -126,9 +126,6 @@ const Toolbar = ({ onAddItem, selectedTool, setSelectedTool, onDelete, onUndo}) 
                         >
                         🗑️ Delete
                     </button>
-                    <button className="action-button duplicate" title="Duplicate selected item">
-                        📋 Copy
-                    </button>
                     <button className="action-button undo" title="Undo" onClick={onUndo} >
                         🧹 Undo
                     </button>
@@ -248,12 +245,6 @@ const Toolbar = ({ onAddItem, selectedTool, setSelectedTool, onDelete, onUndo}) 
                     background: #ffebee;
                     border-color: #ef5350;
                     color: #c62828;
-                }
-
-                .action-button.duplicate:hover {
-                    background: #e3f2fd;
-                    border-color: #42a5f5;
-                    color: #1565c0;
                 }
 
                 .action-button.undo:hover {
