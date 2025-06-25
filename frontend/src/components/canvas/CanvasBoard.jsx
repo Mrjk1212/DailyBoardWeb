@@ -172,9 +172,9 @@ const CanvasBoard = () => {
         }
     };
 
-    const pushToHistory = (type, item) => {
+    const pushToHistory = useCallback((type, item) => {
         setHistory(prev => [...prev, { type, item }]);
-    }
+    }, []);
 
     const handleUndo = useCallback(() => {
         setHistory(prev => {
@@ -225,7 +225,7 @@ const CanvasBoard = () => {
 
             return prev.slice(0, -1);
         });
-    });
+    }, []);
 
 
     useEffect(() => {
@@ -289,6 +289,9 @@ const CanvasBoard = () => {
                 case 'bottom':
                     newHeight = Math.max(30, originalSize.current.height + deltaY);
                     break;
+                default: 
+                    console.log("default case for resize...");
+                    break;
             }
 
             setItems(prev => prev.map(i =>
@@ -327,19 +330,38 @@ const CanvasBoard = () => {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = useCallback((id) => {
+
         const itemToDelete = items.find(i => i.id === id);
         if (!itemToDelete) return;
 
         pushToHistory('delete', itemToDelete);
 
         try {
-            await deleteItem(id); // <- backend sets deleted=true
+            deleteItem(id); // <- backend sets deleted=true
             setItems(prev => prev.filter(i => i.id !== id)); // <- frontend removes it from UI
         } catch (err) {
             console.error("Failed to delete item:", err);
         }
-    };
+    }, [items, pushToHistory]);
+
+
+    useEffect(() => {
+            const handleKeyDown = (e) => {
+                if (e.key === 'Delete') {
+                    e.preventDefault();
+                    if (selectedId) {
+                        handleDelete(selectedId);
+                    }
+                }
+            };
+
+            window.addEventListener('keydown', handleKeyDown);
+            return () => {
+                window.removeEventListener('keydown', handleKeyDown);
+            };
+        }, [handleDelete, selectedId]);
+
 
     const handleUpdate = async (updatedItem) => {
         const oldItem = items.find(i => i.id === updatedItem.id);
