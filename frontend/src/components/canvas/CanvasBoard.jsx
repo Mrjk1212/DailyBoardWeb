@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Stage, Layer } from "react-konva";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useItems } from "../../hooks/useItems";
@@ -176,7 +176,7 @@ const CanvasBoard = () => {
         setHistory(prev => [...prev, { type, item }]);
     }
 
-    const handleUndo = async () => {
+    const handleUndo = useCallback(() => {
         setHistory(prev => {
             if (prev.length === 0) return prev;
 
@@ -210,13 +210,38 @@ const CanvasBoard = () => {
                     ...lastAction.item,
                     data: JSON.stringify(lastAction.item.data),
                 }).then(updated => {
-                    setItems(prevItems => prevItems.map(i => i.id === updated.id ? updated : i));
+                    const parsedUpdated = {
+                        ...updated,
+                        data: typeof updated.data === 'string' ? JSON.parse(updated.data) : updated.data,
+                    };
+
+                    setItems(prevItems =>
+                        prevItems.map(i => i.id === parsedUpdated.id ? parsedUpdated : i)
+                    );
                 }).catch(console.error);
+            } else {
+                console.log("Unknown Undo Action");
             }
 
             return prev.slice(0, -1);
         });
-    };
+    });
+
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const ctrlOrCmd = isMac ? e.metaKey : e.ctrlKey;
+
+            if (ctrlOrCmd && e.key === 'z') {
+                e.preventDefault();
+                handleUndo();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleUndo]);
 
     const handleResizeStart = (itemId, corner, e) => {
         e.cancelBubble = true;
