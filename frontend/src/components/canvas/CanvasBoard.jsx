@@ -13,6 +13,7 @@ import GoalNoteEditor from '../items/goal-note/GoalNoteEditor';
 import { Line } from 'react-konva';
 import { fetchItems, createItem, updateItem, deleteItem, undeleteItem } from '../api/useApi';
 import LinkNoteEditor from '../items/link-note/LinkNoteEditor';
+import ColorPickerOverlay from '../color-picker-overlay/ColorPickerOverlay';
 
 console.log('=== DEBUG IMPORTS ===');
 console.log('React:', React);
@@ -47,6 +48,7 @@ const CanvasBoard = () => {
     const [editingDescription, setEditingDescription] = useState("");
     const [editingGoalDate, setEditingGoalDate] = useState("");
     const [editingUrl, setEditingUrl] = useState("");
+    const [editingColorTarget, setEditingColorTarget] = useState(null); 
 
 
     useEffect(() => {
@@ -381,6 +383,21 @@ const CanvasBoard = () => {
         }
     };
 
+    const handleColorChangeComplete = (id, type, newColor) => {
+        const item = items.find(i => i.id === id && i.type === type);
+        if (!item) return;
+
+        const updatedItem = {
+            ...item,
+            data: {
+                ...item.data,
+                color: newColor,
+            },
+        };
+
+        handleUpdate(updatedItem);
+    };
+
     const handleDoubleClick = (item) => {
         if (item.type === ITEM_TYPES.STICKY_NOTE) {
             setEditingId(item.id);
@@ -546,6 +563,7 @@ const CanvasBoard = () => {
                                 isDraggable={!isResizing}
                                 onDelete={() => handleDelete(item.id)}
                                 onUpdate={handleUpdate}
+                                onOpenColorPicker={(id, type) => setEditingColorTarget({ id, type })}
                             />
                         ))}
                 </Layer>
@@ -564,6 +582,14 @@ const CanvasBoard = () => {
                 </Layer>
             </Stage>
 
+            <ColorPickerOverlay
+                target={editingColorTarget}
+                items={items}
+                stageScale={canvas.stageScale}
+                stagePos={canvas.stagePos}
+                onChangeComplete={handleColorChangeComplete}
+                onClose={() => setEditingColorTarget(null)}
+            />
 
             <StickyNoteEditor
                 editingId={editingId}

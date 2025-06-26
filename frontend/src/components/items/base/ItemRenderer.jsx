@@ -15,7 +15,8 @@ const ItemRenderer = React.memo(({
     onResize, 
     isDraggable, 
     onDelete, 
-    onUpdate 
+    onUpdate,
+    onOpenColorPicker
 }) => {
     // Don't recreate commonProps object - pass props directly (somehow this creates new stuff for every re-render and is slow AF)
     switch (item.type) {
@@ -31,6 +32,7 @@ const ItemRenderer = React.memo(({
                     isDraggable={isDraggable}
                     onDelete={onDelete}
                     onUpdate={onUpdate}
+                    onOpenColorPicker={onOpenColorPicker}
                 />
             );
         case ITEM_TYPES.TODO_LIST:
@@ -45,6 +47,7 @@ const ItemRenderer = React.memo(({
                     isDraggable={isDraggable}
                     onDelete={onDelete}
                     onUpdate={onUpdate}
+                    onOpenColorPicker={onOpenColorPicker}
                 />
             );
 
@@ -60,6 +63,7 @@ const ItemRenderer = React.memo(({
                     isDraggable={isDraggable}
                     onDelete={onDelete}
                     onUpdate={onUpdate}
+                    onOpenColorPicker={onOpenColorPicker}
                 />
             );
         case ITEM_TYPES.GOAL_NOTE:
@@ -74,6 +78,7 @@ const ItemRenderer = React.memo(({
                 isDraggable={isDraggable}
                 onDelete={onDelete}
                 onUpdate={onUpdate}
+                onOpenColorPicker={onOpenColorPicker}
             />
         );
         case ITEM_TYPES.LINK:
@@ -88,6 +93,7 @@ const ItemRenderer = React.memo(({
                 isDraggable={isDraggable}
                 onDelete={onDelete}
                 onUpdate={onUpdate}
+                onOpenColorPicker={onOpenColorPicker}
             />
         );
         default:

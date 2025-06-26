@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Text, Circle } from "react-konva";
 import BaseItem from "../base/BaseItem";
+import {ChromePicker} from 'react-color';
+import { Html } from "react-konva-utils";
 
-const StickyNote = ({ item, isSelected, onDragEnd, onSelect, onDoubleClick, onResize, isDraggable }) => {
+const StickyNote = ({ item, isSelected, onDragEnd, onSelect, onDoubleClick, onResize, isDraggable, onOpenColorPicker }) => {
+
     const handleResizeMouseDown = (e, corner) => {
         e.cancelBubble = true;
         e.evt.preventDefault();
@@ -90,6 +93,21 @@ const StickyNote = ({ item, isSelected, onDragEnd, onSelect, onDoubleClick, onRe
                         listening={true}
                         style={{ cursor: 'e-resize' }}
                     />
+
+                    {/* Right resize handle */}
+                    <Circle
+                        x={item.width / 2}
+                        y={item.height / 2}
+                        radius={8}
+                        fill="#ff69b4"
+                        stroke="#b3006b"
+                        strokeWidth={1}
+                        onClick={() => onOpenColorPicker?.(item.id, item.type)}
+                        draggable={false}
+                        listening={true}
+                        style={{ cursor: 'pointer' }}
+                    />
+                    
                 </>
             )}
         </BaseItem>
