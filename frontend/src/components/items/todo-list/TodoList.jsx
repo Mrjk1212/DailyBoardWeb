@@ -11,6 +11,7 @@ const TodoList = ({
     onResize,
     isDraggable,
     onUpdate,
+    onOpenColorPicker
 }) => {
     const shapeRef = useRef();
     const { x, y, width, height, data } = item;
@@ -65,7 +66,7 @@ const TodoList = ({
                     ref={shapeRef}
                     width={width}
                     height={height}
-                    fill="#b3e5fc"
+                    fill={item.data.color || "#BBBBBBBB"}
                     stroke={isSelected ? "blue" : "black"}
                     cornerRadius={10}
                     shadowBlur={5}
@@ -206,6 +207,20 @@ const TodoList = ({
                             listening={true}
                             style={{ cursor: "e-resize" }}
                         />
+
+                        {/* Coler Picker "button" */}
+                            <Circle
+                                x={item.width / 2}
+                                y={item.height / item.height}
+                                radius={8}
+                                fill="#ff69b4"
+                                stroke="#b3006b"
+                                strokeWidth={1}
+                                onClick={() => onOpenColorPicker?.(item.id, item.type)}
+                                draggable={false}
+                                listening={true}
+                                style={{ cursor: 'pointer' }}
+                            />
                     </>
                 )}
             </Group>

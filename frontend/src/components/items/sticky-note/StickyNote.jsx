@@ -94,7 +94,7 @@ const StickyNote = ({ item, isSelected, onDragEnd, onSelect, onDoubleClick, onRe
                         style={{ cursor: 'e-resize' }}
                     />
 
-                    {/* Right resize handle */}
+                    {/* Coler Picker "button" */}
                     <Circle
                         x={item.width / 2}
                         y={item.height / 2}

@@ -10,6 +10,7 @@ const LinkNote = ({
     onDoubleClick,
     onResize,
     isDraggable,
+    onOpenColorPicker
 }) => {
     const clickTimer = useRef(null);
 
@@ -102,6 +103,22 @@ const LinkNote = ({
                     style={{ cursor: "nw-resize" }}
                 />
             )}
+
+            {isSelected && (
+                <Circle
+                    x={item.width / 2}
+                    y={item.height / item.height}
+                    radius={8}
+                    fill="#ff69b4"
+                    stroke="#b3006b"
+                    strokeWidth={1}
+                    onClick={() => onOpenColorPicker?.(item.id, item.type)}
+                    draggable={false}
+                    listening={true}
+                    style={{ cursor: 'pointer' }}
+                />
+                )}
+            
         </BaseItem>
     );
 };
