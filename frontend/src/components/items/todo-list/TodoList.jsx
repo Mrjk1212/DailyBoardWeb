@@ -67,7 +67,7 @@ const TodoList = ({
                     width={width}
                     height={height}
                     fill={item.data.color || "#BBBBBBBB"}
-                    stroke={isSelected ? "blue" : "black"}
+                    stroke={isSelected ? "#007bff" : null}
                     cornerRadius={10}
                     shadowBlur={5}
                 />
