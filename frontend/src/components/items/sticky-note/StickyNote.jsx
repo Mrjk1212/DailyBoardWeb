@@ -97,7 +97,7 @@ const StickyNote = ({ item, isSelected, onDragEnd, onSelect, onDoubleClick, onRe
                     {/* Coler Picker "button" */}
                     <Circle
                         x={item.width / 2}
-                        y={item.height / 2}
+                        y={item.height / item.height}
                         radius={8}
                         fill="#ff69b4"
                         stroke="#b3006b"
