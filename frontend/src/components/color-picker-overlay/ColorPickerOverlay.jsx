@@ -34,6 +34,7 @@ const ColorPickerOverlay = ({
                 userSelect: "none",
             }}
         >
+            if(isSelected){}
             <ChromePicker
                 color={item.data.color || "#fff59d"}
                 onChangeComplete={(color) => {

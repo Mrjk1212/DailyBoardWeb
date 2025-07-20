@@ -1,6 +1,8 @@
 import React from "react";
-import { Text, Circle } from "react-konva";
+import { Text, Circle, KonvaImage, Image } from "react-konva";
 import BaseItem from "../base/BaseItem";
+import colorWheelImage from "../../../resources/colorWheelImage.png";
+import useImage from 'use-image';
 
 const GoalNote = ({
     item,
@@ -20,6 +22,11 @@ const GoalNote = ({
             onResize(item.id, corner, e);
         }
     };
+
+    const [image] = useImage(colorWheelImage);
+    const scaledX = image.width * 0.1;
+    const scaledY = image.height * 0.1;
+
 
     // Calculate countdown days left
     const today = new Date();
@@ -120,17 +127,18 @@ const GoalNote = ({
                     />
 
                     {/* Coler Picker "button" */}
-                        <Circle
-                            x={item.width / 2}
-                            y={item.height / item.height}
-                            radius={8}
-                            fill="#ff69b4"
-                            stroke="#b3006b"
+                        <Image
+                            image={image}
+                            scaleX={0.1}
+                            scaleY={0.1}
+                            x={(item.width / 2) - scaledX/2}
+                            y={(item.height / item.height) - scaledY/4}
                             strokeWidth={1}
                             onClick={() => onOpenColorPicker?.(item.id, item.type)}
                             draggable={false}
                             listening={true}
                             style={{ cursor: 'pointer' }}
+                            
                         />
                 </>
             )}
