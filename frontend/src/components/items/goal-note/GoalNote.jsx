@@ -24,6 +24,12 @@ const GoalNote = ({
     };
 
     const [image] = useImage(colorWheelImage);
+
+    //Need to sort of buffer this bc useImage is async and leads to nothing on the first render...
+    if (!image) {
+        return <Text text="Loading..." />;
+    }
+
     const scaledX = image.width * 0.1;
     const scaledY = image.height * 0.1;
 

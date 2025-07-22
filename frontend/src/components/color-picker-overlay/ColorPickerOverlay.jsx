@@ -14,6 +14,8 @@ const ColorPickerOverlay = ({
     const item = items.find((i) => i.id === target.id && i.type === target.type);
     if (!item) return null;
 
+    //if(!item.isSelected) return null;
+
     const { x, y, width } = item;
     const left = x * stageScale + stagePos.x + width * stageScale + 10;
     const top = y * stageScale + stagePos.y;
@@ -34,7 +36,7 @@ const ColorPickerOverlay = ({
                 userSelect: "none",
             }}
         >
-            if(isSelected){}
+            
             <ChromePicker
                 color={item.data.color || "#fff59d"}
                 onChangeComplete={(color) => {
