@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, Circle, KonvaImage, Image } from "react-konva";
+import { Text, Circle, Image } from "react-konva";
 import BaseItem from "../base/BaseItem";
 import colorWheelImage from "../../../resources/colorWheelImage.png";
 import useImage from 'use-image';
@@ -137,8 +137,8 @@ const GoalNote = ({
                             image={image}
                             scaleX={0.1}
                             scaleY={0.1}
-                            x={(item.width / 2) - scaledX/2}
-                            y={(item.height / item.height) - scaledY/4}
+                            x={(item.width) - scaledX}
+                            y={scaledY - scaledY}
                             strokeWidth={1}
                             onClick={() => onOpenColorPicker?.(item.id, item.type)}
                             draggable={false}

@@ -1,6 +1,8 @@
 import React, { useRef } from "react";
-import { Text, Circle } from "react-konva";
+import { Text, Circle, Image } from "react-konva";
 import BaseItem from "../base/BaseItem";
+import useImage from 'use-image';
+import colorWheelImage from "../../../resources/colorWheelImage.png";
 
 const LinkNote = ({
     item,
@@ -13,6 +15,16 @@ const LinkNote = ({
     onOpenColorPicker
 }) => {
     const clickTimer = useRef(null);
+
+    const [image] = useImage(colorWheelImage);
+
+    //Need to sort of buffer this bc useImage is async and leads to nothing on the first render...
+    if (!image) {
+        return <Text text="Loading..." />;
+    }
+
+    const scaledX = image.width * 0.1;
+    const scaledY = image.height * 0.1;
 
     const handleSingleClick = () => {
         if (!isSelected) {
@@ -105,17 +117,18 @@ const LinkNote = ({
             )}
 
             {isSelected && (
-                <Circle
-                    x={item.width / 2}
-                    y={item.height / item.height}
-                    radius={8}
-                    fill="#ff69b4"
-                    stroke="#b3006b"
+                <Image
+                    image={image}
+                    scaleX={0.1}
+                    scaleY={0.1}
+                    x={(item.width) - scaledX}
+                    y={scaledY - scaledY}
                     strokeWidth={1}
                     onClick={() => onOpenColorPicker?.(item.id, item.type)}
                     draggable={false}
                     listening={true}
                     style={{ cursor: 'pointer' }}
+                    
                 />
                 )}
             

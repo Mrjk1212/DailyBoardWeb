@@ -60,7 +60,7 @@ const LinkNoteEditor = ({
                     top: `${top}px`,
                     left: `${left}px`,
                     width: `${scaledWidth}px`,
-                    height: `${inputHeight}px`,
+                    height: `${inputHeight * 1.5}px`,
                     fontSize: `${item.data.fontSize * stageScale || 14}px`,
                     background: item.data.color || "#e9f2ff",
                     border: "2px solid #0056b3",
