@@ -26,10 +26,10 @@ const Calendar = ({
     <Rect
         width={item.width}
         height={item.height}
-        fill="#fffde7"
+        fill="#8d8c86ff"
         stroke="#fbc02d"
-        strokeWidth={20}
-        cornerRadius={6}
+        strokeWidth={30}
+        cornerRadius={10}
         onClick={onSelect}
     />
     <Text
@@ -45,8 +45,8 @@ const Calendar = ({
         <>
             {/* Bottom-right */}
             <Circle
-                x={item.width}
-                y={item.height}
+                x={item.width + 5}
+                y={item.height + 5}
                 radius={6}
                 fill="#007bff"
                 stroke="#0056b3"
@@ -62,7 +62,7 @@ const Calendar = ({
             {/* Bottom */}
             <Circle
                 x={item.width / 2}
-                y={item.height}
+                y={item.height + 10}
                 radius={6}
                 fill="#007bff"
                 stroke="#0056b3"
@@ -77,7 +77,7 @@ const Calendar = ({
 
             {/* Right */}
             <Circle
-                x={item.width}
+                x={item.width + 10}
                 y={item.height / 2}
                 radius={6}
                 fill="#007bff"
