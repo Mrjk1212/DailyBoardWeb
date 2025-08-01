@@ -67,6 +67,8 @@ const CalendarEditor = ({ item, stageScale, stagePos, setEvents }) => {
                 overflow: 'hidden',
                 boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
                 pointerEvents: 'auto',
+                padding: 0,
+                margin: 0,
             }}
         >
             {/* ICS file input */}
@@ -74,16 +76,31 @@ const CalendarEditor = ({ item, stageScale, stagePos, setEvents }) => {
                 type="file"
                 accept=".ics"
                 onChange={handleFileChange}
-                style={{ margin: 8, width: 'calc(100% - 16px)' }}
+                style={{ margin: 8}}
             />
 
             {/* The actual calendar */}
-            <FullCalendar
-                plugins={[dayGridPlugin]}
-                initialView="dayGridMonth"
-                height="90%" // leave space for file input
-                events={item.data?.events || []}
-            />
+            <div
+                style={{
+                    transform: `scale(${stageScale})`,
+                    transformOrigin: 'top left',
+                    width: `${100 / stageScale}%`,  // To counter the shrink from scale
+                    height: `${100 / stageScale}%`, // Maintain layout
+                    overflow: 'hidden',
+                }}
+                >
+                <FullCalendar
+                    plugins={[dayGridPlugin]}
+                    initialView="dayGridMonth"
+                    events={item.data?.events || []}
+                    height="100%"
+                    width="100%"
+                    expandRows={true}
+                    dayMaxEventRows={true}
+                    dayMaxEvents={true}
+                    
+                />
+                </div>
         </div>
     );
 };
