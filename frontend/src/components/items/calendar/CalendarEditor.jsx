@@ -81,26 +81,24 @@ const CalendarEditor = ({ item, stageScale, stagePos, setEvents }) => {
 
             {/* The actual calendar */}
             <div
-                style={{
-                    transform: `scale(${stageScale})`,
-                    transformOrigin: 'top left',
-                    width: `${100 / stageScale}%`,  // To counter the shrink from scale
-                    height: `${100 / stageScale}%`, // Maintain layout
-                    overflow: 'hidden',
-                }}
-                >
-                <FullCalendar
-                    plugins={[dayGridPlugin]}
-                    initialView="dayGridMonth"
-                    events={item.data?.events || []}
-                    height="100%"
-                    width="100%"
-                    expandRows={true}
-                    dayMaxEventRows={true}
-                    dayMaxEvents={true}
-                    
-                />
-                </div>
+    style={{
+        transform: `scale(${stageScale})`,
+        transformOrigin: 'top left',
+        width: `${100 / stageScale}%`,  // counteract shrink
+        height: `${100 / stageScale}%`, // maintain layout
+        overflow: 'hidden',
+    }}
+>
+    <FullCalendar
+        plugins={[dayGridPlugin]}
+        initialView="dayGridMonth"
+        events={item.data?.events || []}
+        height="100%"        // ✅ allowed
+        expandRows={true}
+        dayMaxEventRows={true}
+        dayMaxEvents={true}
+    />
+</div>
         </div>
     );
 };

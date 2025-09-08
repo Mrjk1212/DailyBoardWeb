@@ -1,7 +1,9 @@
 import React from "react";
-import { Rect, Text } from "react-konva";
+import { Rect, Text, Image } from "react-konva";
 import BaseItem from "../base/BaseItem";
 import { Circle } from "react-konva";
+import useImage from 'use-image';
+import colorWheelImage from "../../../resources/colorWheelImage.png";
 
 const Calendar = ({
     item,
@@ -10,8 +12,20 @@ const Calendar = ({
     onSelect,
     onResize,
     onDoubleClick,
-    isDraggable
+    isDraggable,
+    onOpenColorPicker
 }) => {
+
+    const [image] = useImage(colorWheelImage);
+
+    //Need to sort of buffer this bc useImage is async and leads to nothing on the first render...
+    if (!image) {
+        return <Text text="Loading..." />;
+    }
+
+    const scaledX = image.width * 0.1;
+    const scaledY = image.height * 0.1;
+
     return (
         <BaseItem
             item={item}
@@ -27,7 +41,7 @@ const Calendar = ({
         width={item.width}
         height={item.height}
         fill="#8d8c86ff"
-        stroke="#fbc02d"
+        stroke={item.data.color || "#BBBBBBBB"}
         strokeWidth={30}
         cornerRadius={10}
         onClick={onSelect}
@@ -89,6 +103,21 @@ const Calendar = ({
                     onResize(item.id, 'right', e);
                 }}
                 style={{ cursor: 'ew-resize' }}
+            />
+
+            {/* Coler Picker "button" */}
+            <Image
+                image={image}
+                scaleX={0.1}
+                scaleY={0.1}
+                x={(item.width)}//x={(item.width) - scaledX}
+                y={scaledY - scaledY}//y={-20}
+                strokeWidth={1}
+                onClick={() => onOpenColorPicker?.(item.id, item.type)}
+                draggable={false}
+                listening={true}
+                style={{ cursor: 'pointer' }}
+                
             />
         </>
     )}
