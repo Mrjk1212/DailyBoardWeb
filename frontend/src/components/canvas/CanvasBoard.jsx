@@ -48,7 +48,7 @@ const CanvasBoard = () => {
     const [editingDescription, setEditingDescription] = useState("");
     const [editingGoalDate, setEditingGoalDate] = useState("");
     const [editingUrl, setEditingUrl] = useState("");
-    const [editingColorTarget, setEditingColorTarget] = useState(null); 
+    const [editingColorTarget, setEditingColorTarget] = useState(null);
 
 
     useEffect(() => {
@@ -291,7 +291,7 @@ const CanvasBoard = () => {
                 case 'bottom':
                     newHeight = Math.max(30, originalSize.current.height + deltaY);
                     break;
-                default: 
+                default:
                     console.log("default case for resize...");
                     break;
             }
@@ -349,20 +349,20 @@ const CanvasBoard = () => {
 
 
     useEffect(() => {
-            const handleKeyDown = (e) => {
-                if (e.key === 'Delete') {
-                    e.preventDefault();
-                    if (selectedId) {
-                        handleDelete(selectedId);
-                    }
+        const handleKeyDown = (e) => {
+            if (e.key === 'Delete') {
+                e.preventDefault();
+                if (selectedId) {
+                    handleDelete(selectedId);
                 }
-            };
+            }
+        };
 
-            window.addEventListener('keydown', handleKeyDown);
-            return () => {
-                window.removeEventListener('keydown', handleKeyDown);
-            };
-        }, [handleDelete, selectedId]);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [handleDelete, selectedId]);
 
 
     const handleUpdate = async (updatedItem) => {
@@ -629,8 +629,9 @@ const CanvasBoard = () => {
                 onSave={handleSave}
             />
 
-            {items.map((item) =>
-                item.type === "calendar" ? (
+            {items
+                .filter(item => item.type === "calendar" && !item.deleted)
+                .map(item => (
                     <CalendarEditor
                         key={item.id}
                         item={item}
@@ -638,8 +639,7 @@ const CanvasBoard = () => {
                         stagePos={canvas.stagePos}
                         setEvents={(newEvents) => handleUpdateEvents(item.id, newEvents)}
                     />
-                ) : null
-            )}
+                ))}
         </>
     );
 };
